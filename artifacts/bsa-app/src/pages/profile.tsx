@@ -93,8 +93,24 @@ export default function Profile() {
   const effectiveScore = Math.min(100, avgScore + qtmBoost);
 
   // Yearly calculator
-  const yearlySOL = (level.multiplier * 0.1 * 52).toFixed(2);
+  const [calcCurrency, setCalcCurrency] = useState<"SOL" | "USD" | "KZT">("SOL");
+  const SOL_USD = 150;
+  const USD_KZT = 470;
+
+  const yearlySOL = parseFloat((level.multiplier * 0.1 * 52).toFixed(2));
+  const yearlyUSD = Math.round(yearlySOL * SOL_USD);
+  const yearlyKZT = Math.round(yearlyUSD * USD_KZT);
   const yearlySavings = Math.round((discount / 100) * 12 * 15000);
+
+  function fmtCurrency(sol: number): string {
+    if (calcCurrency === "SOL") return `${sol.toFixed(2)} SOL`;
+    if (calcCurrency === "USD") return `$${Math.round(sol * SOL_USD).toLocaleString()}`;
+    return `${Math.round(sol * SOL_USD * USD_KZT).toLocaleString()}₸`;
+  }
+  const currSymbol = calcCurrency === "SOL" ? "SOL" : calcCurrency === "USD" ? "USD ($)" : "KZT (₸)";
+  const mainValue = calcCurrency === "SOL" ? `${yearlySOL}` : calcCurrency === "USD" ? `$${yearlyUSD.toLocaleString()}` : `${yearlyKZT.toLocaleString()}₸`;
+  const mainUnit = calcCurrency === "SOL" ? "SOL" : calcCurrency === "USD" ? "USD" : "KZT";
+  const mainColor = calcCurrency === "SOL" ? "text-primary" : calcCurrency === "USD" ? "text-emerald-400" : "text-cyan-400";
 
   // Stake timer
   useEffect(() => {
@@ -597,61 +613,129 @@ export default function Profile() {
         {/* === BENEFIT CALCULATOR === */}
         <div className="glass-panel p-6 rounded-xl border border-cyan-500/20 relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-cyan-500/50 to-transparent" />
-          <h3 className="font-mono font-bold flex items-center gap-2 mb-2">
-            <Calculator className="w-5 h-5 text-cyan-400" />
-            {t.calculator_title}
-          </h3>
-          <p className="text-xs font-mono text-muted-foreground mb-5">{t.calculator_subtitle}</p>
+
+          {/* Header + Currency Switcher */}
+          <div className="flex items-start justify-between gap-3 mb-4">
+            <div>
+              <h3 className="font-mono font-bold flex items-center gap-2">
+                <Calculator className="w-5 h-5 text-cyan-400" />
+                {t.calculator_title}
+              </h3>
+              <p className="text-xs font-mono text-muted-foreground mt-1">{t.calculator_subtitle}</p>
+            </div>
+            {/* Currency toggle */}
+            <div className="flex items-center gap-0.5 bg-black/40 border border-white/10 rounded-lg p-0.5 flex-shrink-0">
+              {(["SOL", "USD", "KZT"] as const).map((cur) => (
+                <button
+                  key={cur}
+                  onClick={() => setCalcCurrency(cur)}
+                  className={`px-2.5 py-1 rounded text-xs font-mono font-bold transition-all duration-200 ${
+                    calcCurrency === cur
+                      ? cur === "SOL"
+                        ? "bg-primary text-black"
+                        : cur === "USD"
+                        ? "bg-emerald-500 text-black"
+                        : "bg-cyan-500 text-black"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {cur === "SOL" ? "◎ SOL" : cur === "USD" ? "$ USD" : "₸ KZT"}
+                </button>
+              ))}
+            </div>
+          </div>
 
           <div className="space-y-4">
-            {/* Main result */}
-            <div className="bg-black/40 rounded-xl border border-primary/20 p-5 text-center relative overflow-hidden">
+            {/* Main result — always shows SOL + converted */}
+            <div className="bg-black/40 rounded-xl border border-white/10 p-5 relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent" />
-              <div className="relative">
-                <div className="text-xs font-mono text-muted-foreground uppercase mb-1">При индексе 90+ ({levelName} · ×{level.multiplier})</div>
-                <div className="text-4xl font-bold font-mono text-primary neon-text">{yearlySOL} SOL</div>
-                <div className="text-sm font-mono text-muted-foreground mt-1">{t.calculator_sol_rewards} {t.calculator_per_year}</div>
+              <div className="relative flex flex-col md:flex-row md:items-center gap-4">
+                {/* SOL amount — always visible */}
+                <div className="flex-1 text-center md:text-left">
+                  <div className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest mb-0.5">
+                    {levelName} · ×{level.multiplier} · 52 {lang === "en" ? "wks" : "нед"}
+                  </div>
+                  <div className="flex items-baseline gap-2 justify-center md:justify-start">
+                    <span className="text-4xl font-bold font-mono text-primary neon-text">{yearlySOL}</span>
+                    <span className="text-lg font-mono text-primary/70">SOL</span>
+                  </div>
+                  <div className="text-xs font-mono text-muted-foreground mt-0.5">{t.calculator_sol_rewards} {t.calculator_per_year}</div>
+                </div>
+
+                {/* Divider */}
+                {calcCurrency !== "SOL" && (
+                  <>
+                    <div className="hidden md:block w-px h-14 bg-white/10" />
+                    <div className="flex-1 text-center md:text-right">
+                      <div className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest mb-0.5">
+                        {currSymbol} · 1 SOL ≈ {calcCurrency === "USD" ? `$${SOL_USD}` : `${(SOL_USD * USD_KZT).toLocaleString()}₸`}
+                      </div>
+                      <div className={`text-4xl font-bold font-mono ${mainColor}`}>
+                        {mainValue}
+                      </div>
+                      <div className="text-xs font-mono text-muted-foreground mt-0.5">{mainUnit} {t.calculator_per_year}</div>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-black/30 rounded-lg p-4 border border-white/5">
-                <div className="flex items-center gap-2 mb-2">
-                  <TrendingUp className="w-4 h-4 text-primary" />
-                  <span className="text-xs font-mono text-muted-foreground uppercase">SOL</span>
-                </div>
-                <div className="font-mono font-bold text-xl text-primary">{yearlySOL}</div>
-                <div className="text-xs font-mono text-muted-foreground">52 недели × {(level.multiplier * 0.1).toFixed(2)}</div>
+            {/* Stats row */}
+            <div className="grid grid-cols-3 gap-2">
+              <div className="bg-black/30 rounded-lg p-3 border border-white/5 text-center">
+                <div className="text-[10px] font-mono text-muted-foreground uppercase mb-1">SOL / год</div>
+                <div className="font-mono font-bold text-primary">{yearlySOL}</div>
               </div>
+              <div className="bg-black/30 rounded-lg p-3 border border-white/5 text-center">
+                <div className="text-[10px] font-mono text-muted-foreground uppercase mb-1">USD / год</div>
+                <div className="font-mono font-bold text-emerald-400">${yearlyUSD.toLocaleString()}</div>
+              </div>
+              <div className="bg-black/30 rounded-lg p-3 border border-white/5 text-center">
+                <div className="text-[10px] font-mono text-muted-foreground uppercase mb-1">KZT / год</div>
+                <div className="font-mono font-bold text-cyan-400">{(yearlyKZT / 1000).toFixed(0)}K₸</div>
+              </div>
+            </div>
 
-              <div className="bg-black/30 rounded-lg p-4 border border-white/5">
-                <div className="flex items-center gap-2 mb-2">
-                  <Shield className="w-4 h-4 text-cyan-400" />
-                  <span className="text-xs font-mono text-muted-foreground uppercase">KZT</span>
-                </div>
-                <div className="font-mono font-bold text-xl text-cyan-400">
-                  {yearlySavings.toLocaleString()}₸
-                </div>
-                <div className="text-xs font-mono text-muted-foreground">{t.calculator_insurance}</div>
+            {/* Insurance savings */}
+            <div className="bg-black/30 rounded-lg p-3 border border-white/5 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Shield className="w-4 h-4 text-cyan-400" />
+                <span className="text-xs font-mono text-muted-foreground">{t.calculator_insurance}</span>
+              </div>
+              <div className="text-right">
+                <span className="font-mono font-bold text-cyan-400">
+                  {calcCurrency === "KZT" ? `${yearlySavings.toLocaleString()}₸`
+                    : calcCurrency === "USD" ? `$${Math.round(yearlySavings / USD_KZT).toLocaleString()}`
+                    : `${(yearlySavings / (SOL_USD * USD_KZT)).toFixed(2)} SOL`}
+                </span>
               </div>
             </div>
 
             {/* Level progression */}
             <div className="bg-black/20 rounded-lg p-3 border border-white/5">
-              <div className="text-xs font-mono text-muted-foreground mb-2 uppercase">Прогресс по уровням</div>
+              <div className="text-xs font-mono text-muted-foreground mb-2 uppercase">
+                {lang === "en" ? "Level Progression" : lang === "kz" ? "Деңгей прогресі" : "Прогресс по уровням"}
+              </div>
               {[
-                { name: t.level_bronze, mult: 1.0, sol: "5.2", color: "#cd7f32" },
-                { name: t.level_silver, mult: 1.5, sol: "7.8", color: "#94a3b8" },
-                { name: t.level_gold,   mult: 2.0, sol: "10.4", color: "#facc15" },
-              ].map(({ name, mult, sol, color }) => (
-                <div key={name} className="flex items-center gap-3 py-1.5">
-                  <div className="w-12 text-xs font-mono" style={{ color }}>{name}</div>
-                  <div className="flex-1 h-1.5 bg-secondary rounded-full overflow-hidden">
-                    <div className="h-full rounded-full" style={{ width: `${(mult / 2) * 100}%`, background: color }} />
+                { name: t.level_bronze, mult: 1.0, solVal: 5.2,  color: "#cd7f32" },
+                { name: t.level_silver, mult: 1.5, solVal: 7.8,  color: "#94a3b8" },
+                { name: t.level_gold,   mult: 2.0, solVal: 10.4, color: "#facc15" },
+              ].map(({ name, mult, solVal, color }) => {
+                const dispVal = calcCurrency === "SOL"
+                  ? `${solVal} SOL`
+                  : calcCurrency === "USD"
+                  ? `$${Math.round(solVal * SOL_USD).toLocaleString()}`
+                  : `${Math.round(solVal * SOL_USD * USD_KZT / 1000).toFixed(0)}K₸`;
+                return (
+                  <div key={name} className="flex items-center gap-3 py-1.5">
+                    <div className="w-12 text-xs font-mono flex-shrink-0" style={{ color }}>{name}</div>
+                    <div className="flex-1 h-1.5 bg-secondary rounded-full overflow-hidden">
+                      <div className="h-full rounded-full transition-all" style={{ width: `${(mult / 2) * 100}%`, background: color }} />
+                    </div>
+                    <div className="text-xs font-mono font-bold flex-shrink-0 w-20 text-right" style={{ color }}>{dispVal}</div>
                   </div>
-                  <div className="text-xs font-mono font-bold" style={{ color }}>{sol} SOL/yr</div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
