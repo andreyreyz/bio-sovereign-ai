@@ -456,8 +456,8 @@ export default function Profile() {
       {/* ─ Оплата приёма в клинике ─ */}
       <Section open={!!open.send} onToggle={() => toggle("send")}
         icon={<Stethoscope className="w-4 h-4 text-primary" />}
-        title="Оплата приёма"
-        badge={payState === "ok" ? "✓ Оплачено" : selectedClinic ? `−${clinicDisc}% · ${userPaysSol} SOL` : "Выберите клинику"}
+        title="Активация скидки"
+        badge={payState === "ok" ? "✓ Активировано" : selectedClinic ? `−${clinicDisc}% · ${userPaysSol} SOL` : "Выберите клинику"}
         badgeColor={payState === "ok" ? "text-primary" : "text-primary/70"}
         accent="border-primary/20"
       >
@@ -496,8 +496,9 @@ export default function Profile() {
                 <div className="p-4 space-y-3">
                   <div className="text-center">
                     <CheckCircle2 className="w-8 h-8 text-primary mx-auto mb-2" />
-                    <div className="font-mono font-bold text-primary text-lg">Приём оплачен</div>
+                    <div className="font-mono font-bold text-primary text-lg">Скидка активирована</div>
                     <div className="text-[11px] font-mono text-muted-foreground">{payResult.service?.name}</div>
+                    <div className="text-[9px] font-mono text-muted-foreground/50 mt-0.5">Медицинский ваучер · QazTechMedicus</div>
                   </div>
 
                   {/* Flow receipt */}
@@ -505,7 +506,7 @@ export default function Profile() {
                     <div className="flex items-center gap-2 bg-black/30 rounded-lg p-2.5 border border-white/5">
                       <span className="text-sm">💪</span>
                       <div className="flex-1 min-w-0">
-                        <div className="text-[10px] font-mono text-muted-foreground">Ты потратил (50% цены)</div>
+                        <div className="text-[10px] font-mono text-muted-foreground">Использовано бонусных баллов</div>
                         <div className="font-mono font-bold text-sm text-foreground">{payResult.userPaysSol} SOL</div>
                       </div>
                       <div className="text-[10px] font-mono text-muted-foreground text-right">
@@ -554,7 +555,7 @@ export default function Profile() {
               </div>
               <Button size="sm" variant="outline" className="w-full font-mono text-xs"
                 onClick={() => { setPayState("idle"); setPayResult(null); }}>
-                <RotateCcw className="w-3 h-3 mr-1.5" />Оплатить ещё один приём
+                <RotateCcw className="w-3 h-3 mr-1.5" />Активировать ещё одну скидку
               </Button>
             </div>
 
@@ -630,7 +631,7 @@ export default function Profile() {
                   style={{ background: "linear-gradient(135deg,#050f08 0%,#0a1214 100%)" }}>
                   <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
                   <div className="p-3 space-y-2">
-                    <p className="text-[9px] font-mono text-muted-foreground uppercase tracking-widest">Расчёт оплаты</p>
+                    <p className="text-[9px] font-mono text-muted-foreground uppercase tracking-widest">Активация бонуса</p>
                     <div className="grid grid-cols-2 gap-2">
                       <div className="bg-black/30 rounded-lg p-2 border border-white/5">
                         <div className="text-[9px] font-mono text-muted-foreground">Стандартная цена</div>
@@ -668,12 +669,12 @@ export default function Profile() {
                 disabled={payState === "paying" || !selectedService || displaySol < userPaysSol}
                 className="w-full font-mono bg-primary text-black hover:bg-primary/90 shadow-[0_0_15px_rgba(0,255,128,0.3)]">
                 {payState === "paying"
-                  ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Обработка...</>
-                  : displaySol < userPaysSol ? "Недостаточно SOL"
-                  : <><Stethoscope className="w-4 h-4 mr-2" />Оплатить {userPaysSol} SOL · {bsaPriceKzt.toLocaleString()}₸</>}
+                  ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Активация...</>
+                  : displaySol < userPaysSol ? "Недостаточно бонусных баллов"
+                  : <><Stethoscope className="w-4 h-4 mr-2" />Активировать скидку за {userPaysSol} SOL</>}
               </Button>
               <p className="text-[10px] font-mono text-muted-foreground/50 text-center">
-                SOL → Пул BSA → клиника получает подтверждение · Devnet
+                Бонусные баллы → медицинский ваучер · QazTechMedicus
               </p>
             </>
           )}
@@ -1302,6 +1303,35 @@ export default function Profile() {
           })}
         </div>
       </Section>
+
+      {/* ─ Правила протокола QazTechMedicus ─ */}
+      <div className="mx-4 mb-6 mt-2">
+        <div className="relative rounded-xl border border-white/8 overflow-hidden bg-black/40">
+          <div className="absolute inset-0 opacity-[0.015]"
+            style={{ backgroundImage: "repeating-linear-gradient(0deg, #00ff41 0px, #00ff41 1px, transparent 1px, transparent 40px), repeating-linear-gradient(90deg, #00ff41 0px, #00ff41 1px, transparent 1px, transparent 40px)" }} />
+          <div className="relative p-4 space-y-3">
+            <div className="flex items-start gap-2.5">
+              <div className="w-6 h-6 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <Shield className="w-3.5 h-3.5 text-primary" />
+              </div>
+              <div>
+                <p className="font-mono font-bold text-[11px] text-foreground">Правила протокола BSA</p>
+                <p className="text-[9px] font-mono text-muted-foreground/60 mt-0.5">QazTechMedicus · Программа лояльности</p>
+              </div>
+            </div>
+            <div className="space-y-2 text-[10px] font-mono text-muted-foreground/70 leading-relaxed">
+              <p>• Начисления SOL являются <span className="text-primary/80">целевыми медицинскими ваучерами</span> в рамках программы лояльности QazTechMedicus и не являются платёжным средством.</p>
+              <p>• Баллы BSA предназначены исключительно для <span className="text-primary/80">активации скидок</span> у клиник-партнёров протокола. Вывод средств регулируется правилами соответствия.</p>
+              <p>• Протокол работает на базе Solana Devnet. Все транзакции — тестовые и не имеют реальной коммерческой ценности вне экосистемы BSA.</p>
+              <p>• Максимальный лимит программы лояльности: <span className="text-amber-400/80">200,000 ₸/год</span> согласно НК РК для бонусных программ.</p>
+            </div>
+            <div className="flex items-center gap-2 pt-1 border-t border-white/5">
+              <div className="w-1.5 h-1.5 rounded-full bg-primary/60 animate-pulse" />
+              <p className="text-[9px] font-mono text-muted-foreground/40">BSA.PROTOCOL v2.0 · Sovereign Health & Loyalty · QazTechMedicus 2026</p>
+            </div>
+          </div>
+        </div>
+      </div>
 
     </div>
   );
