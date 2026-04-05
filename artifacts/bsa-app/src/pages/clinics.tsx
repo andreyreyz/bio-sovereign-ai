@@ -6,7 +6,7 @@ import {
   Star, MapPin, Clock, Phone, ChevronDown, ChevronRight, ChevronUp,
   Shield, Zap, Filter, X, ExternalLink, TrendingUp, Users,
   CheckCircle2, AlertTriangle, Camera, Building2, Search,
-  SlidersHorizontal, Map as MapIcon, List, Brain, Coins
+  SlidersHorizontal, Map as MapIcon, List, Brain, Coins, Tag, Sparkles
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CLINICS, MAIN_SPECS, type Clinic, type ClinicReview } from "@/data/clinics";
@@ -68,13 +68,17 @@ function ClinicCard({ clinic, recommended, onClick, compact = false }: {
 
   return (
     <button onClick={onClick} className={`w-full text-left rounded-xl border overflow-hidden transition-all hover:scale-[1.01] active:scale-[0.99] ${
-      recommended ? "border-cyan-500/50 shadow-[0_0_20px_rgba(34,211,238,0.15)]"
+      clinic.flagship ? "border-amber-500/60 shadow-[0_0_25px_rgba(251,191,36,0.2)]"
+      : recommended ? "border-cyan-500/50 shadow-[0_0_20px_rgba(34,211,238,0.15)]"
       : premium ? "border-primary/30 shadow-[0_0_15px_rgba(0,255,128,0.08)]"
       : "border-white/10"
     } bg-black/40 backdrop-blur-sm`}>
-      {/* Premium / Recommended badge strip */}
-      {(premium || recommended) && (
-        <div className={`h-0.5 ${recommended ? "bg-gradient-to-r from-cyan-500 via-cyan-300 to-cyan-500" : "bg-gradient-to-r from-primary via-primary/50 to-primary"}`} />
+      {/* Top stripe */}
+      {(clinic.flagship || premium || recommended) && (
+        <div className={`h-0.5 ${
+          clinic.flagship ? "bg-gradient-to-r from-transparent via-amber-400 to-transparent"
+          : recommended ? "bg-gradient-to-r from-cyan-500 via-cyan-300 to-cyan-500"
+          : "bg-gradient-to-r from-primary via-primary/50 to-primary"}`} />
       )}
 
       <div className={`p-3.5 ${compact ? "space-y-2" : "space-y-3"}`}>
@@ -82,12 +86,17 @@ function ClinicCard({ clinic, recommended, onClick, compact = false }: {
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
+              {clinic.flagship && (
+                <span className="text-[9px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/50 rounded px-1.5 py-0.5 flex-shrink-0 flex items-center gap-0.5">
+                  <Sparkles className="w-2.5 h-2.5" />ФЛАГМАН BSA
+                </span>
+              )}
               {recommended && (
                 <span className="text-[9px] font-mono font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 rounded px-1.5 py-0.5 flex-shrink-0">
                   🧠 AI РЕКОМЕНДУЕТ
                 </span>
               )}
-              {premium && !recommended && (
+              {premium && !clinic.flagship && !recommended && (
                 <span className="text-[9px] font-mono font-bold bg-primary/10 text-primary border border-primary/30 rounded px-1.5 py-0.5 flex-shrink-0">
                   ⭐ PREMIUM
                 </span>
@@ -97,10 +106,20 @@ function ClinicCard({ clinic, recommended, onClick, compact = false }: {
                   <Shield className="w-2.5 h-2.5" />AI Verified
                 </span>
               )}
+              {clinic.medDiscount && (
+                <span className="text-[9px] font-mono font-bold bg-rose-500/10 text-rose-300 border border-rose-500/30 rounded px-1.5 py-0.5 flex items-center gap-0.5 flex-shrink-0">
+                  <Tag className="w-2.5 h-2.5" />−{clinic.medDiscount}% SOL
+                </span>
+              )}
             </div>
-            <div className={`font-mono font-bold leading-tight ${recommended ? "text-cyan-100" : "text-foreground"} ${compact ? "text-sm" : "text-base"}`}>
+            <div className={`font-mono font-bold leading-tight ${clinic.flagship ? "text-amber-100" : recommended ? "text-cyan-100" : "text-foreground"} ${compact ? "text-sm" : "text-base"}`}>
               {clinic.name}
             </div>
+            {clinic.city && clinic.city !== "Алматы" && (
+              <div className="text-[9px] font-mono text-muted-foreground flex items-center gap-0.5 mt-0.5">
+                <MapPin className="w-2.5 h-2.5" />{clinic.city}
+              </div>
+            )}
           </div>
           <AiRating value={clinic.aiRating} small={compact} />
         </div>

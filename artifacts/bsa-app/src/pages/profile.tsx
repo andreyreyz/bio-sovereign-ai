@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { Link } from "wouter";
 import { useLang } from "@/hooks/use-language";
 import { useWallet } from "@/hooks/use-wallet";
 import { useDevice, DeviceBrand } from "@/hooks/use-device";
@@ -7,7 +8,8 @@ import {
   Shield, Wallet, RefreshCw, Loader2, CheckCircle2,
   Zap, Battery, Clock, Bluetooth, BluetoothOff, Lock, Unlock,
   FlaskConical, Dna, Calculator, Coins, ExternalLink,
-  ChevronDown, ChevronRight, Send, ArrowDownToLine, AlertTriangle, TrendingDown
+  ChevronDown, ChevronRight, Send, ArrowDownToLine, AlertTriangle, TrendingDown,
+  HeartPulse, Tag, Sparkles, Building2, Star
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
@@ -572,6 +574,138 @@ export default function Profile() {
           ) : (
             <div className="text-center py-4"><Loader2 className="w-5 h-5 text-primary animate-spin mx-auto" /></div>
           )}
+        </div>
+      </Section>
+
+      {/* ─ Целевой медицинский баланс ─ */}
+      <Section open={!!open.medbal} onToggle={() => toggle("medbal")}
+        icon={<HeartPulse className="w-4 h-4 text-rose-400" />}
+        title="Целевой медбаланс"
+        badge={`${(displaySol * 0.16).toFixed(3)} SOL заморожено`}
+        badgeColor="text-rose-400"
+        accent="border-rose-500/25"
+      >
+        <div className="pt-3 space-y-3">
+          {/* Hero card */}
+          <div className="relative rounded-xl overflow-hidden"
+            style={{ background: "linear-gradient(135deg,#1a0808 0%,#0f1218 50%,#0a100f 100%)" }}>
+            <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-rose-500 to-transparent" />
+            <div className="p-4 space-y-3">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-[10px] font-mono text-rose-400/70 uppercase tracking-widest mb-1">Заморожено на медицину</p>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-3xl font-bold font-mono text-rose-300">
+                      {(displaySol * 0.16).toFixed(3)}
+                    </span>
+                    <span className="font-mono text-rose-400/60">SOL</span>
+                  </div>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-[11px] font-mono text-muted-foreground">
+                      ≈ {Math.round(displaySol * 0.16 * SOL_USD * USD_KZT).toLocaleString()}₸
+                    </span>
+                  </div>
+                </div>
+                <div className="w-12 h-12 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center flex-shrink-0">
+                  <Lock className="w-5 h-5 text-rose-400" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div className="bg-black/30 rounded-lg p-2.5 border border-white/5">
+                  <div className="text-[9px] font-mono text-muted-foreground mb-1">Можно потратить</div>
+                  <div className="font-mono font-bold text-sm text-rose-300">Только клиники</div>
+                  <div className="text-[9px] font-mono text-muted-foreground">партнёры BSA</div>
+                </div>
+                <div className="bg-black/30 rounded-lg p-2.5 border border-white/5">
+                  <div className="text-[9px] font-mono text-muted-foreground mb-1">Ваша скидка</div>
+                  <div className="font-mono font-bold text-sm text-primary">до 50%</div>
+                  <div className="text-[9px] font-mono text-muted-foreground">при оплате SOL</div>
+                </div>
+              </div>
+
+              <div className="bg-rose-500/8 border border-rose-500/20 rounded-lg p-2.5 text-[10px] font-mono text-rose-300/80 flex items-start gap-2">
+                <Lock className="w-3 h-3 flex-shrink-0 mt-0.5" />
+                SOL заморожены смарт-контрактом — нельзя вывести или потратить вне клиник-партнёров BSA.
+                Это гарантирует целевое использование средств.
+              </div>
+            </div>
+          </div>
+
+          {/* Partner clinics with discounts */}
+          <div>
+            <p className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest mb-2">
+              Скидка при оплате медбалансом
+            </p>
+            <div className="space-y-1.5">
+              {/* Tibora — flagship */}
+              <div className="relative flex items-center gap-3 p-3 rounded-xl border border-amber-500/50 overflow-hidden"
+                style={{ background: "linear-gradient(135deg,#1a1200 0%,#0f0f0a 100%)" }}>
+                <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-amber-400 to-transparent" />
+                <div className="w-9 h-9 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center flex-shrink-0 text-lg">
+                  🌿
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5 mb-0.5">
+                    <span className="font-mono text-xs font-bold text-amber-200">Tibora</span>
+                    <span className="text-[8px] font-mono bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded px-1 py-0.5 flex items-center gap-0.5">
+                      <Sparkles className="w-2 h-2" />ФЛАГМАН
+                    </span>
+                  </div>
+                  <div className="text-[9px] font-mono text-muted-foreground">Центр вост. медицины · Астана</div>
+                </div>
+                <div className="text-center flex-shrink-0">
+                  <div className="font-mono font-bold text-xl text-amber-300">50%</div>
+                  <div className="text-[8px] font-mono text-amber-400/60">скидка</div>
+                </div>
+              </div>
+
+              {/* Other partners */}
+              {[
+                { name: "Cardio Life Premium", icon: "🫀", spec: "Кардиология", discount: 30, color: "primary" },
+                { name: "NeuroBalance Clinic", icon: "🧠", spec: "Неврология",   discount: 25, color: "primary" },
+                { name: "EndoMed Center",       icon: "💉", spec: "Эндокринология", discount: 20, color: "primary" },
+                { name: "PulmoVita",            icon: "🫁", spec: "Пульмонология", discount: 20, color: "primary" },
+                { name: "OrthoSport Clinic",    icon: "🦴", spec: "Ортопедия",     discount: 15, color: "primary" },
+                { name: "GastroComfort",        icon: "🏥", spec: "Гастроэнтерология", discount: 10, color: "primary" },
+              ].map(({ name, icon, spec, discount }) => (
+                <div key={name} className="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-black/30 border border-white/5">
+                  <span className="text-base flex-shrink-0">{icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-mono text-xs font-bold truncate">{name}</div>
+                    <div className="text-[9px] font-mono text-muted-foreground">{spec}</div>
+                  </div>
+                  <div className="font-mono font-bold text-sm text-primary flex-shrink-0">−{discount}%</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Example calculation */}
+          <div className="bg-black/20 border border-white/5 rounded-xl p-3 space-y-2">
+            <p className="text-[10px] font-mono text-muted-foreground uppercase">Пример расчёта · Tibora</p>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="text-center">
+                <div className="text-[9px] font-mono text-muted-foreground">Стоимость приёма</div>
+                <div className="font-mono font-bold text-sm">15,000₸</div>
+              </div>
+              <div className="text-center">
+                <div className="text-[9px] font-mono text-muted-foreground">С медбалансом BSA</div>
+                <div className="font-mono font-bold text-sm text-primary">7,500₸</div>
+              </div>
+            </div>
+            <div className="h-0.5 bg-white/5 rounded-full" />
+            <div className="flex items-center justify-between text-[10px] font-mono">
+              <span className="text-muted-foreground">Ваша экономия за приём</span>
+              <span className="text-primary font-bold">7,500₸ (~0.106 SOL)</span>
+            </div>
+          </div>
+
+          <Link href="/clinics">
+            <Button className="w-full font-mono bg-rose-500/15 text-rose-300 border border-rose-500/30 hover:bg-rose-500/25 shadow-[0_0_15px_rgba(244,63,94,0.15)]" variant="outline">
+              <Building2 className="w-4 h-4 mr-2" />Использовать в клинике-партнёре
+            </Button>
+          </Link>
         </div>
       </Section>
 

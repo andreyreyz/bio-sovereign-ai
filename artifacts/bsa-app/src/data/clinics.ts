@@ -26,6 +26,9 @@ export interface Clinic {
   aiRating: number;
   aiVerified: boolean;
   premium: boolean;
+  flagship?: boolean;
+  city?: string;
+  medDiscount?: number;
   distance: number;
   visitCost: number;
   address: string;
@@ -44,6 +47,43 @@ export interface Clinic {
 
 export const CLINICS: Clinic[] = [
   {
+    id: "tibora",
+    name: "Tibora",
+    specialization: ["Восточная медицина", "Акупунктура", "Аюрведа", "Гомеопатия", "Реабилитация"],
+    mainSpec: "Восточная медицина",
+    aiRating: 97,
+    aiVerified: true,
+    premium: true,
+    flagship: true,
+    city: "Астана",
+    medDiscount: 50,
+    distance: 18.4,
+    visitCost: 15000,
+    address: "пр. Кабанбай батыра 11, ЖК Expo City, Астана",
+    phone: "+7 (7172) 55-88-00",
+    website: "tibora.kz",
+    workingHours: { "Пн-Пт": "08:00–21:00", "Сб": "09:00–19:00", "Вс": "10:00–17:00" },
+    lat: 51.1282,
+    lng: 71.4307,
+    photos: [
+      "https://images.unsplash.com/photo-1600334129128-685c5582fd35?w=400&q=80",
+      "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=400&q=80",
+    ],
+    description: "Tibora — флагманский партнёр BSA. Центр восточной медицины в Астане. Интегрирует тысячелетние практики Востока с современной биометрикой. BSA Health Score используется для персонализации каждого курса лечения. Пользователи BSA получают скидку 50% при оплате SOL-токенами из целевого медицинского баланса.",
+    cases: [
+      { condition: "Хронический стресс", patientsCount: 134, avgImprovementPct: 89, avgScoreBefore: 43, avgScoreAfter: 91 },
+      { condition: "Болевой синдром",     patientsCount: 97,  avgImprovementPct: 78, avgScoreBefore: 51, avgScoreAfter: 87 },
+      { condition: "Нарушения сна",       patientsCount: 112, avgImprovementPct: 92, avgScoreBefore: 38, avgScoreAfter: 85 },
+      { condition: "Иммунодефицит",       patientsCount: 76,  avgImprovementPct: 71, avgScoreBefore: 46, avgScoreAfter: 79 },
+    ],
+    reviews: [
+      { id: "tr1", userName: "A***v", txHash: "8FxT...3kNp", visitDate: "2026-03-25", rating: 5, text: "Прошёл курс акупунктуры. BSA Health Score вырос с 43 до 89 за 4 недели. Скидка 50% через SOL — это революция!", healthBefore: 43, healthAfter: 89, verified: true },
+      { id: "tr2", userName: "Z***a", txHash: "1GmW...7vQs", visitDate: "2026-03-10", rating: 5, text: "Восточная медицина + аналитика BSA — идеальная комбинация. Никогда не чувствовала себя так хорошо.", healthBefore: 55, healthAfter: 94, verified: true },
+    ],
+    bsaLeadsCount: 89,
+    adBudgetSol: 5.0,
+  },
+  {
     id: "c1",
     name: "Cardio Life Premium",
     specialization: ["Кардиология", "Аритмология", "Эхокардиография"],
@@ -51,6 +91,8 @@ export const CLINICS: Clinic[] = [
     aiRating: 94,
     aiVerified: true,
     premium: true,
+    medDiscount: 30,
+    city: "Алматы",
     distance: 1.2,
     visitCost: 12000,
     address: "ул. Достык 87, Алматы",
@@ -84,6 +126,8 @@ export const CLINICS: Clinic[] = [
     aiRating: 88,
     aiVerified: true,
     premium: true,
+    medDiscount: 25,
+    city: "Алматы",
     distance: 2.7,
     visitCost: 9500,
     address: "пр. Аль-Фараби 11, Алматы",
@@ -114,6 +158,8 @@ export const CLINICS: Clinic[] = [
     aiRating: 91,
     aiVerified: true,
     premium: false,
+    medDiscount: 20,
+    city: "Алматы",
     distance: 3.4,
     visitCost: 8000,
     address: "ул. Тимирязева 28, Алматы",
@@ -144,6 +190,8 @@ export const CLINICS: Clinic[] = [
     aiRating: 86,
     aiVerified: false,
     premium: false,
+    medDiscount: 15,
+    city: "Алматы",
     distance: 4.1,
     visitCost: 7500,
     address: "ул. Сейфуллина 410, Алматы",
@@ -172,6 +220,8 @@ export const CLINICS: Clinic[] = [
     aiRating: 83,
     aiVerified: true,
     premium: false,
+    medDiscount: 20,
+    city: "Алматы",
     distance: 5.8,
     visitCost: 7000,
     address: "мкр. Аlatau, ул. Рыскулова 2а, Алматы",
@@ -202,6 +252,8 @@ export const CLINICS: Clinic[] = [
     aiRating: 79,
     aiVerified: false,
     premium: false,
+    medDiscount: 10,
+    city: "Алматы",
     distance: 2.1,
     visitCost: 6500,
     address: "ул. Абая 109, Алматы",
