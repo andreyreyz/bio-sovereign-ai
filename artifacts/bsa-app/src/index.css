@@ -51,42 +51,41 @@
   --animate-pulse-fast: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-/* We force dark mode only for this app */
 :root, .dark {
-  --background: 0 0% 2%;
-  --foreground: 0 0% 90%;
-  
-  --border: 150 20% 12%;
-  --input: 150 20% 12%;
-  --ring: 150 100% 40%;
-  
-  --card: 0 0% 4%;
-  --card-foreground: 0 0% 90%;
-  --card-border: 150 20% 15%;
-  
-  --popover: 0 0% 4%;
-  --popover-foreground: 0 0% 90%;
-  --popover-border: 150 20% 15%;
-  
-  --primary: 150 100% 40%;
+  --background: 0 0% 1.5%;
+  --foreground: 0 0% 92%;
+
+  --border: 150 15% 10%;
+  --input: 150 15% 10%;
+  --ring: 138 100% 38%;
+
+  --card: 0 0% 3%;
+  --card-foreground: 0 0% 92%;
+  --card-border: 150 15% 12%;
+
+  --popover: 0 0% 3%;
+  --popover-foreground: 0 0% 92%;
+  --popover-border: 150 15% 12%;
+
+  --primary: 138 100% 38%;
   --primary-foreground: 0 0% 0%;
-  
-  --secondary: 150 10% 15%;
-  --secondary-foreground: 0 0% 90%;
-  
-  --muted: 0 0% 10%;
-  --muted-foreground: 0 0% 60%;
-  
-  --accent: 150 20% 15%;
-  --accent-foreground: 150 100% 40%;
-  
-  --destructive: 0 80% 50%;
+
+  --secondary: 150 8% 10%;
+  --secondary-foreground: 0 0% 92%;
+
+  --muted: 0 0% 8%;
+  --muted-foreground: 0 0% 50%;
+
+  --accent: 150 15% 12%;
+  --accent-foreground: 138 100% 38%;
+
+  --destructive: 0 78% 50%;
   --destructive-foreground: 0 0% 100%;
-  
-  --app-font-sans: 'Inter', sans-serif;
+
+  --app-font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   --app-font-serif: Georgia, serif;
-  --app-font-mono: 'Space Mono', monospace;
-  --radius: 0.5rem;
+  --app-font-mono: 'Space Mono', 'SF Mono', ui-monospace, monospace;
+  --radius: 0.75rem;
 }
 
 @layer base {
@@ -95,44 +94,123 @@
   }
 
   body {
-    @apply font-sans antialiased bg-background text-foreground selection:bg-primary/30;
+    @apply font-sans antialiased bg-background text-foreground selection:bg-primary/20;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
-  
+
   html {
     color-scheme: dark;
     background-color: hsl(var(--background));
   }
 }
 
-
+/* ── Premium Glassmorphism ─────────────────────────────────── */
 .glass-panel {
-  background: rgba(10, 15, 10, 0.6);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(0, 255, 128, 0.15);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  background: rgba(6, 9, 8, 0.55);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .glass-panel-success {
-  background: rgba(0, 255, 128, 0.05);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(0, 255, 128, 0.3);
-  box-shadow: 0 0 20px rgba(0, 255, 128, 0.1);
+  background: rgba(0, 200, 80, 0.04);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 255, 65, 0.2);
+  box-shadow: 0 0 30px rgba(0, 200, 80, 0.08), 0 8px 40px rgba(0, 0, 0, 0.5);
 }
 
+.glass-card {
+  background: linear-gradient(135deg, rgba(12, 18, 12, 0.8) 0%, rgba(4, 6, 4, 0.9) 100%);
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.04) inset,
+    0 12px 48px rgba(0, 0, 0, 0.7),
+    0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* ── Glow effects ─────────────────────────────────────────── */
 .neon-text {
-  text-shadow: 0 0 10px rgba(0, 255, 128, 0.5);
+  text-shadow: 0 0 20px rgba(0, 255, 65, 0.4), 0 0 60px rgba(0, 255, 65, 0.1);
 }
 
-/* Leaflet map dark theme overrides */
+.glow-btn {
+  box-shadow: 0 0 20px rgba(0, 200, 80, 0.35), 0 4px 15px rgba(0, 0, 0, 0.5);
+  transition: box-shadow 0.2s ease, transform 0.15s ease;
+}
+.glow-btn:hover {
+  box-shadow: 0 0 32px rgba(0, 200, 80, 0.55), 0 6px 20px rgba(0, 0, 0, 0.5);
+  transform: translateY(-1px);
+}
+.glow-btn:active {
+  transform: translateY(0);
+}
+
+/* ── Animated Beam ────────────────────────────────────────── */
+@keyframes beam-travel {
+  0%   { stroke-dashoffset: 1000; opacity: 0; }
+  5%   { opacity: 1; }
+  95%  { opacity: 1; }
+  100% { stroke-dashoffset: -200; opacity: 0; }
+}
+
+@keyframes dot-travel {
+  0%   { offset-distance: 0%;   opacity: 0; }
+  5%   { opacity: 1; }
+  95%  { opacity: 1; }
+  100% { offset-distance: 100%; opacity: 0; }
+}
+
+@keyframes beam-pulse {
+  0%, 100% { opacity: 0.3; transform: scaleX(0.8); }
+  50%       { opacity: 1;   transform: scaleX(1); }
+}
+
+.beam-path {
+  stroke-dasharray: 200 800;
+  animation: beam-travel 2.4s linear infinite;
+}
+
+.beam-glow {
+  filter: blur(3px);
+  stroke-dasharray: 80 920;
+  animation: beam-travel 2.4s linear infinite;
+  animation-delay: 0.1s;
+}
+
+/* ── Scan line ────────────────────────────────────────────── */
+@keyframes scan {
+  0%   { transform: translateY(-100%); opacity: 0; }
+  10%  { opacity: 0.6; }
+  90%  { opacity: 0.6; }
+  100% { transform: translateY(400%); opacity: 0; }
+}
+
+.scan-line {
+  animation: scan 2s ease-in-out infinite;
+}
+
+/* ── Grid noise background ────────────────────────────────── */
+.grid-bg {
+  background-image:
+    linear-gradient(rgba(0,255,65,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,255,65,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* ── Leaflet overrides ────────────────────────────────────── */
 .leaflet-container {
-  background: #050d08;
+  background: #030503;
   font-family: monospace;
 }
 .leaflet-control-zoom a {
-  background: #0a1810 !important;
-  border-color: rgba(0,255,128,0.3) !important;
-  color: #00ff80 !important;
+  background: #080f09 !important;
+  border-color: rgba(0,255,65,0.25) !important;
+  color: #00ff41 !important;
 }
 .leaflet-popup-content-wrapper {
   background: transparent !important;
