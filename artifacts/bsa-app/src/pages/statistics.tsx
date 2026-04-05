@@ -3,10 +3,14 @@ import { useLang } from "@/hooks/use-language";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import {
   LineChart, Line, BarChart, Bar, AreaChart, Area,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadialBarChart, RadialBar, Cell
 } from "recharts";
-import { BarChart3, TrendingUp, TrendingDown, BrainCircuit, Loader2, Star, AlertCircle } from "lucide-react";
+import {
+  BarChart3, TrendingUp, TrendingDown, BrainCircuit,
+  Loader2, Star, AlertCircle, Activity, ShieldAlert, ShieldCheck
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
+
 type Period = "day" | "week" | "month";
 
 const API = "/api";
@@ -27,12 +31,26 @@ async function fetchInsight(payload: { period: string; avgScore: number; trend: 
   });
   return r.json();
 }
+async function fetchRiskForecast(payload: { weekData: any[]; avgScore: number; lang: string }) {
+  const r = await fetch(`${API}/statistics/risk-forecast`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  return r.json();
+}
 
 const CHART_COLORS = {
   score:  "#00ff80",
   steps:  "#22d3ee",
   sleep:  "#818cf8",
   heart:  "#f43f5e",
+};
+
+const RISK_CONFIG = {
+  low:    { color: "#00ff80", bg: "bg-primary/10",      border: "border-primary/40",      icon: ShieldCheck,   label_key: "forecast_risk_low"    },
+  medium: { color: "#eab308", bg: "bg-yellow-500/10",   border: "border-yellow-500/40",   icon: ShieldAlert,   label_key: "forecast_risk_medium" },
+  high:   { color: "#f43f5e", bg: "bg-destructive/10",  border: "border-destructive/40",  icon: AlertCircle,   label_key: "forecast_risk_high"   },
 };
 
 const CustomTooltip = ({ active, payload, label }: any) => {
@@ -51,6 +69,7 @@ export default function Statistics() {
   const { t, lang } = useLang();
   const [period, setPeriod] = useState<Period>("week");
   const [insight, setInsight] = useState<string>("");
+  const [forecast, setForecast] = useState<any>(null);
 
   const { data: history = [], isLoading: histLoading } = useQuery({
     queryKey: ["stats-history", period],
@@ -67,14 +86,19 @@ export default function Statistics() {
     onSuccess: (data) => setInsight(data.insight || ""),
   });
 
+  const forecastMutation = useMutation({
+    mutationFn: fetchRiskForecast,
+    onSuccess: (data) => setForecast(data),
+  });
+
   const handleInsight = () => {
     if (!summary) return;
-    insightMutation.mutate({
-      period,
-      avgScore: summary.avgScore,
-      trend: summary.trend,
-      lang,
-    });
+    insightMutation.mutate({ period, avgScore: summary.avgScore, trend: summary.trend, lang });
+  };
+
+  const handleForecast = () => {
+    if (!history.length || !summary) return;
+    forecastMutation.mutate({ weekData: history.slice(0, 7), avgScore: summary.avgScore, lang });
   };
 
   const periods: { key: Period; label: string }[] = [
@@ -82,6 +106,15 @@ export default function Statistics() {
     { key: "week",  label: t.period_week },
     { key: "month", label: t.period_month },
   ];
+
+  const riskCfg = forecast ? RISK_CONFIG[forecast.overallRisk as keyof typeof RISK_CONFIG] || RISK_CONFIG.low : null;
+  const RiskIcon = riskCfg?.icon;
+
+  const trendColors: Record<string, string> = {
+    growing: "text-destructive",
+    stable: "text-yellow-400",
+    declining: "text-primary",
+  };
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 animate-in fade-in duration-500">
@@ -94,7 +127,6 @@ export default function Statistics() {
           </h1>
           <p className="text-muted-foreground font-mono text-sm">{t.stats_subtitle}</p>
         </div>
-        {/* Period filter */}
         <div className="flex items-center gap-1 bg-secondary/50 rounded-lg border border-border p-1">
           {periods.map(({ key, label }) => (
             <button
@@ -168,7 +200,6 @@ export default function Statistics() {
 
       {/* Steps + Sleep + Heart Row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Steps */}
         <div className="glass-panel p-5 rounded-xl">
           <h3 className="font-mono font-bold text-xs mb-4 flex items-center gap-2">
             <div className="w-2.5 h-2.5 rounded-full" style={{ background: CHART_COLORS.steps }}></div>
@@ -185,7 +216,6 @@ export default function Statistics() {
           </ResponsiveContainer>
         </div>
 
-        {/* Sleep */}
         <div className="glass-panel p-5 rounded-xl">
           <h3 className="font-mono font-bold text-xs mb-4 flex items-center gap-2">
             <div className="w-2.5 h-2.5 rounded-full" style={{ background: CHART_COLORS.sleep }}></div>
@@ -202,7 +232,6 @@ export default function Statistics() {
           </ResponsiveContainer>
         </div>
 
-        {/* Heart Rate */}
         <div className="glass-panel p-5 rounded-xl">
           <h3 className="font-mono font-bold text-xs mb-4 flex items-center gap-2">
             <div className="w-2.5 h-2.5 rounded-full" style={{ background: CHART_COLORS.heart }}></div>
@@ -224,6 +253,101 @@ export default function Statistics() {
             </AreaChart>
           </ResponsiveContainer>
         </div>
+      </div>
+
+      {/* ===== AI RISK FORECAST ===== */}
+      <div className="glass-panel p-6 rounded-xl border border-yellow-500/20 relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-yellow-500/50 to-transparent" />
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-5">
+          <h3 className="font-mono font-bold text-lg flex items-center gap-2">
+            <Activity className="w-5 h-5 text-yellow-400" />
+            {t.forecast_title}
+          </h3>
+          <Button
+            onClick={handleForecast}
+            disabled={forecastMutation.isPending || !summary || histLoading}
+            className="font-mono bg-yellow-500/20 text-yellow-300 border border-yellow-500/40 hover:bg-yellow-500/30"
+            variant="outline"
+          >
+            {forecastMutation.isPending ? (
+              <><Loader2 className="w-4 h-4 mr-2 animate-spin" />{t.forecast_loading}</>
+            ) : (
+              <><Activity className="w-4 h-4 mr-2" />{t.forecast_btn}</>
+            )}
+          </Button>
+        </div>
+
+        {forecast && riskCfg && RiskIcon ? (
+          <div className="animate-in fade-in duration-500 space-y-5">
+            {/* Overall Risk */}
+            <div className={`flex items-center gap-4 p-4 rounded-xl ${riskCfg.bg} border ${riskCfg.border}`}>
+              <div className="w-16 h-16 relative flex-shrink-0">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RadialBarChart innerRadius="60%" outerRadius="100%" data={[{ value: forecast.riskScore, fill: riskCfg.color }]} startAngle={90} endAngle={-270}>
+                    <RadialBar dataKey="value" cornerRadius={4} background={{ fill: "rgba(255,255,255,0.05)" }}>
+                      <Cell fill={riskCfg.color} />
+                    </RadialBar>
+                  </RadialBarChart>
+                </ResponsiveContainer>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="font-mono font-bold text-xs" style={{ color: riskCfg.color }}>{forecast.riskScore}</span>
+                </div>
+              </div>
+              <div className="flex-1">
+                <div className="font-mono font-bold text-xl mb-1" style={{ color: riskCfg.color }}>
+                  {t[riskCfg.label_key as keyof typeof t]}
+                </div>
+                <p className="text-xs font-mono text-muted-foreground leading-relaxed">{forecast.forecast7days}</p>
+              </div>
+              <RiskIcon className="w-8 h-8 flex-shrink-0" style={{ color: riskCfg.color }} />
+            </div>
+
+            {/* Disease Risks */}
+            <div>
+              <p className="text-xs font-mono text-muted-foreground uppercase mb-3">Прогноз по направлениям</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {(forecast.diseases || []).map((d: any, i: number) => (
+                  <div key={i} className="bg-black/30 rounded-lg p-3 border border-white/5 flex items-center gap-3">
+                    <span className="text-2xl">{d.emoji}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-mono text-sm font-bold truncate">{d.name}</div>
+                      <div className="flex items-center gap-2 mt-1">
+                        <div className="flex-1 h-1.5 bg-secondary rounded-full overflow-hidden">
+                          <div
+                            className="h-full rounded-full transition-all duration-1000"
+                            style={{
+                              width: `${d.probability}%`,
+                              background: d.probability < 30 ? "#00ff80" : d.probability < 60 ? "#eab308" : "#f43f5e"
+                            }}
+                          />
+                        </div>
+                        <span className="font-mono text-xs font-bold" style={{
+                          color: d.probability < 30 ? "#00ff80" : d.probability < 60 ? "#eab308" : "#f43f5e"
+                        }}>{d.probability}%</span>
+                      </div>
+                    </div>
+                    <span className={`text-xs font-mono ${trendColors[d.trend] || "text-muted-foreground"}`}>
+                      {d.trend === "growing" ? "↑" : d.trend === "declining" ? "↓" : "→"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Prevention Tip */}
+            {forecast.preventionTip && (
+              <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 flex items-start gap-2">
+                <ShieldCheck className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                <p className="text-xs font-mono text-foreground leading-relaxed">{forecast.preventionTip}</p>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="bg-black/20 rounded-lg p-6 border border-dashed border-yellow-500/20 text-center">
+            <Activity className="w-8 h-8 text-yellow-500/30 mx-auto mb-2" />
+            <p className="text-xs font-mono text-muted-foreground">{t.forecast_btn} →</p>
+          </div>
+        )}
       </div>
 
       {/* AI Insight */}

@@ -98,4 +98,54 @@ router.post("/statistics/ai-insight", async (req, res) => {
   }
 });
 
+router.post("/statistics/risk-forecast", async (req, res) => {
+  const { weekData, avgScore, lang } = req.body as {
+    weekData: Array<{ score: number; heartRate: number; steps: number; sleepQuality: number }>;
+    avgScore: number;
+    lang?: string;
+  };
+
+  const langInstruction = lang === "kz"
+    ? "Жауапты қазақ тілінде бер."
+    : lang === "en"
+    ? "Reply in English."
+    : "Отвечай на русском языке.";
+
+  const dataStr = (weekData || []).map((d, i) =>
+    `День ${i + 1}: балл=${d.score}, пульс=${d.heartRate}, шаги=${d.steps}, сон=${d.sleepQuality}`
+  ).join("\n");
+
+  const prompt = `Ты — медицинская ИИ система Bio-Sovereign AI. ${langInstruction}
+
+Биометрические данные пользователя за неделю:
+${dataStr}
+Средний балл здоровья: ${avgScore}/100
+
+Задача: проанализируй данные и создай ПРОГНОЗ РИСКОВ. Верни JSON без разметки:
+{
+  "overallRisk": "low" | "medium" | "high",
+  "riskScore": число 0-100,
+  "diseases": [
+    { "name": "Название болезни", "probability": число 0-100, "trend": "growing"|"stable"|"declining", "emoji": "🫀" },
+    ...3-4 болезни
+  ],
+  "forecast7days": "Краткий прогноз на 7 дней (2-3 предложения)",
+  "preventionTip": "Главный совет профилактики (1 предложение)"
+}`;
+
+  try {
+    const apiKey = process.env.GOOGLE_API_KEY;
+    if (!apiKey) throw new Error("No API key");
+    const ai = new GoogleGenAI({ apiKey });
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+    });
+    const raw = (response.text ?? "").replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+    res.json(JSON.parse(raw));
+  } catch (err) {
+    res.status(500).json({ error: "Forecast unavailable" });
+  }
+});
+
 export default router;

@@ -279,20 +279,23 @@ export default function Dashboard() {
 
                 {/* Transaction Result */}
                 {claimResult && (
-                  <div className="mb-4 p-3 rounded-lg bg-primary/10 border border-primary/30 animate-in fade-in duration-500">
+                  <div className="mb-4 p-4 rounded-xl bg-primary/10 border border-primary/40 animate-in fade-in duration-500 shadow-[0_0_20px_rgba(0,255,128,0.1)]">
                     <p className="text-xs font-mono text-muted-foreground uppercase mb-1">{t.tx_id_label}</p>
-                    <p className="text-xs font-mono text-primary break-all mb-2" data-testid="text-tx-signature">
+                    <p className="text-xs font-mono text-primary break-all mb-3" data-testid="text-tx-signature">
                       {claimResult.signature}
                     </p>
                     <a
                       href={claimResult.explorerUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 text-xs font-mono text-primary hover:underline"
+                      className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-lg bg-primary/20 border border-primary/50 hover:bg-primary/30 transition-all duration-200 shadow-[0_0_12px_rgba(0,255,128,0.25)] hover:shadow-[0_0_20px_rgba(0,255,128,0.4)] group"
                       data-testid="link-explorer"
                     >
-                      <ExternalLink className="w-3 h-3" />
-                      {t.view_explorer}
+                      <div className="w-2 h-2 rounded-full bg-primary animate-pulse-fast flex-shrink-0" />
+                      <span className="text-xs font-mono font-bold text-primary tracking-wider uppercase">
+                        {t.verify_onchain ?? "Verify on Solana Explorer"}
+                      </span>
+                      <ExternalLink className="w-3.5 h-3.5 text-primary group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform flex-shrink-0" />
                     </a>
                   </div>
                 )}
