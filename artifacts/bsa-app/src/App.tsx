@@ -10,6 +10,8 @@ import Dashboard from "@/pages/dashboard";
 import Registry from "@/pages/registry";
 import Statistics from "@/pages/statistics";
 import Profile from "@/pages/profile";
+import Clinics from "@/pages/clinics";
+import ClinicB2B from "@/pages/clinic-b2b";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
@@ -22,6 +24,8 @@ function Router() {
         <Route path="/registry" component={Registry} />
         <Route path="/statistics" component={Statistics} />
         <Route path="/profile" component={Profile} />
+        <Route path="/clinics" component={Clinics} />
+        <Route path="/clinic-b2b" component={ClinicB2B} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

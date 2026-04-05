@@ -4,7 +4,7 @@ import { useLang, Lang } from "@/hooks/use-language";
 import { Button } from "@/components/ui/button";
 import {
   Activity, ShieldCheck, Database, Wallet,
-  BarChart3, User, Wifi, WifiOff, Menu, X
+  BarChart3, User, Wifi, WifiOff, Menu, X, Building2
 } from "lucide-react";
 import { useState } from "react";
 
@@ -15,10 +15,11 @@ const LANG_OPTIONS: { value: Lang; label: string }[] = [
 ];
 
 const NAV_ITEMS = [
-  { href: "/",            icon: Activity,  labelKey: "nav_dashboard" as const },
-  { href: "/statistics",  icon: BarChart3, labelKey: "nav_statistics" as const },
-  { href: "/registry",    icon: Database,  labelKey: "nav_registry" as const },
-  { href: "/profile",     icon: User,      labelKey: "nav_profile" as const },
+  { href: "/",            icon: Activity,   labelKey: "nav_dashboard"  as const },
+  { href: "/statistics",  icon: BarChart3,  labelKey: "nav_statistics" as const },
+  { href: "/registry",    icon: Database,   labelKey: "nav_registry"   as const },
+  { href: "/clinics",     icon: Building2,  labelKey: "nav_clinics"    as const },
+  { href: "/profile",     icon: User,       labelKey: "nav_profile"    as const },
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {
