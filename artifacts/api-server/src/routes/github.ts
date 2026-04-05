@@ -32,6 +32,14 @@ router.post("/github/push", async (req, res) => {
     // Add remote
     execSync(`git remote add github ${remoteUrl}`, { cwd });
 
+    // Stage and commit README if it exists and is untracked/modified
+    try {
+      execSync("git add README.md", { cwd, stdio: "pipe" });
+      execSync('git commit -m "Add project README"', { cwd, stdio: "pipe" });
+    } catch {
+      // ignore if nothing to commit
+    }
+
     // Get current branch
     let branch = "main";
     try {
