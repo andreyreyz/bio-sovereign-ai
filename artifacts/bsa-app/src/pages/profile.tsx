@@ -108,8 +108,39 @@ export default function Profile() {
   const [stakeClaimed, setStakeClaimed] = useState(false);
   const [simulateLocked, setSimulateLocked] = useState(false);
   const [calcCurrency, setCalcCurrency] = useState<"SOL"|"USD"|"KZT">("SOL");
+  const [walletSol, setWalletSol] = useState<number | null>(null);
+  const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  const [balanceLoading, setBalanceLoading] = useState(true);
+  const [balanceRefreshing, setBalanceRefreshing] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval>|null>(null);
   const locale = LOCALE_MAP[lang];
+
+  function getBase() {
+    const d = (window as any).__REPLIT_DEV_DOMAIN__;
+    if (d) return `https://${d}`;
+    return "";
+  }
+
+  async function fetchBalance(silent = false) {
+    if (!silent) setBalanceLoading(true);
+    else setBalanceRefreshing(true);
+    try {
+      const res = await fetch(`${getBase()}/api/wallet/balance`);
+      if (res.ok) {
+        const data = await res.json();
+        setWalletSol(data.sol);
+        setWalletAddress(data.address);
+      }
+    } catch {}
+    setBalanceLoading(false);
+    setBalanceRefreshing(false);
+  }
+
+  useEffect(() => {
+    fetchBalance();
+    const interval = setInterval(() => fetchBalance(true), 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   const { data: stats } = useGetRewardsStats();
   const { data: history } = useGetRewardsHistory();
@@ -146,83 +177,104 @@ export default function Profile() {
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [stakeActive, stakeClaimed]);
 
-  const phantomBalance = address ? (2.847 + (totalSol || 0)).toFixed(3) : null;
+  const displaySol = walletSol !== null ? walletSol : (totalSol || 0);
+  const displayAddress = walletAddress || address;
 
   return (
     <div className="max-w-lg mx-auto space-y-3 animate-in fade-in duration-300 pb-8">
 
       {/* ══════════════════════════════════════════
-          BANK CARD — Кошелёк (always visible)
+          BANK CARD — реальный баланс с Devnet
           ══════════════════════════════════════════ */}
-      <div className="relative rounded-2xl overflow-hidden shadow-[0_0_40px_rgba(0,255,128,0.12)]"
+      <div className="relative rounded-2xl overflow-hidden shadow-[0_0_40px_rgba(0,255,128,0.15)]"
         style={{ background: "linear-gradient(135deg, #0a1a12 0%, #0d2318 50%, #0a1a12 100%)" }}>
-        {/* decorative grid */}
         <div className="absolute inset-0 opacity-10"
           style={{ backgroundImage: "linear-gradient(rgba(0,255,128,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(0,255,128,0.3) 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
         <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-primary to-transparent" />
-        <div className="absolute bottom-0 right-0 w-48 h-48 rounded-full opacity-5"
+        <div className="absolute bottom-0 right-0 w-56 h-56 rounded-full opacity-5"
           style={{ background: "radial-gradient(circle, #00ff80, transparent)", transform: "translate(30%, 30%)" }} />
 
         <div className="relative p-5 space-y-4">
-          {/* Header row */}
+          {/* Header */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center">
-                <span className="text-xs">👻</span>
-              </div>
-              <span className="font-mono text-xs text-primary font-bold">BSA.WALLET</span>
+              <div className="w-7 h-7 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center text-xs">◎</div>
+              <span className="font-mono text-xs text-primary font-bold tracking-widest">BSA · SOLANA</span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-              <span className="text-[10px] font-mono text-primary">DEVNET</span>
+            <div className="flex items-center gap-2">
+              {balanceRefreshing && <Loader2 className="w-3 h-3 text-primary/60 animate-spin" />}
+              <button onClick={() => fetchBalance(true)} className="text-primary/50 hover:text-primary transition-colors">
+                <RefreshCw className="w-3.5 h-3.5" />
+              </button>
+              <div className="flex items-center gap-1.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                <span className="text-[10px] font-mono text-primary">DEVNET</span>
+              </div>
             </div>
           </div>
 
-          {/* Balance */}
-          {address ? (
-            <div>
-              <p className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest mb-0.5">
-                {t.phantom_balance}
-              </p>
-              <div className="flex items-baseline gap-2">
-                <span className="text-5xl font-bold font-mono text-primary neon-text">{phantomBalance}</span>
-                <span className="text-xl font-mono text-primary/60">SOL</span>
+          {/* Balance — always shown */}
+          <div>
+            <p className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest mb-1">
+              Баланс кошелька · Solana Devnet
+            </p>
+            {balanceLoading ? (
+              <div className="flex items-center gap-3 py-2">
+                <Loader2 className="w-6 h-6 text-primary animate-spin" />
+                <span className="font-mono text-muted-foreground text-sm">Подключение к Devnet RPC...</span>
               </div>
-              <p className="text-[10px] font-mono text-muted-foreground mt-1">
-                ≈ ${(parseFloat(phantomBalance!) * SOL_USD).toFixed(0)} · {Math.round(parseFloat(phantomBalance!) * SOL_USD * USD_KZT / 1000)}K₸
-              </p>
-            </div>
-          ) : (
-            <div>
-              <p className="text-xs font-mono text-muted-foreground mb-3">{t.connect_wallet}</p>
-              <Button onClick={connect}
-                className="font-mono text-sm bg-primary text-black hover:bg-primary/90 shadow-[0_0_20px_rgba(0,255,128,0.4)] w-full">
-                <Wallet className="w-4 h-4 mr-2" /> {t.connect_wallet}
-              </Button>
-            </div>
-          )}
+            ) : (
+              <>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-5xl font-bold font-mono text-primary neon-text tracking-tight">
+                    {displaySol.toFixed(4)}
+                  </span>
+                  <span className="text-xl font-mono text-primary/60">SOL</span>
+                </div>
+                <div className="flex items-center gap-3 mt-1">
+                  <span className="text-[11px] font-mono text-muted-foreground">
+                    ≈ ${(displaySol * SOL_USD).toFixed(2)}
+                  </span>
+                  <span className="text-muted-foreground/40">·</span>
+                  <span className="text-[11px] font-mono text-muted-foreground">
+                    {Math.round(displaySol * SOL_USD * USD_KZT).toLocaleString()}₸
+                  </span>
+                </div>
+                {displayAddress && (
+                  <div className="flex items-center gap-1.5 mt-2">
+                    <span className="text-[10px] font-mono text-muted-foreground/60 truncate max-w-[220px]">
+                      {displayAddress.slice(0, 8)}...{displayAddress.slice(-8)}
+                    </span>
+                    <a href={`https://explorer.solana.com/address/${displayAddress}?cluster=devnet`}
+                      target="_blank" rel="noopener noreferrer"
+                      className="text-cyan-400/60 hover:text-cyan-400 flex-shrink-0 transition-colors">
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
 
           {/* Stats row */}
-          {address && (
-            <div className="grid grid-cols-3 gap-2 pt-1">
-              {[
-                { label: "BSA наград", value: `${totalSol.toFixed(2)} SOL`, sub: `${totalRewards} tx` },
-                { label: levelName, value: level.emoji, sub: `×${level.multiplier}` },
-                { label: "Скидка", value: smartLockBurned ? "0%" : `${discount}%`, sub: "страховка" },
-              ].map(({ label, value, sub }) => (
-                <div key={label} className="bg-black/40 rounded-xl p-2.5 border border-white/5 text-center">
-                  <div className="text-[9px] font-mono text-muted-foreground uppercase mb-1">{label}</div>
-                  <div className="font-mono font-bold text-sm text-foreground">{value}</div>
-                  <div className="text-[9px] font-mono text-muted-foreground mt-0.5">{sub}</div>
-                </div>
-              ))}
-            </div>
-          )}
+          <div className="grid grid-cols-3 gap-2 pt-1">
+            {[
+              { label: "BSA наград", value: `${totalSol.toFixed(2)} SOL`, sub: `${totalRewards} tx` },
+              { label: levelName, value: level.emoji, sub: `×${level.multiplier}` },
+              { label: "Скидка", value: smartLockBurned ? "0%" : `${discount}%`, sub: "страховка" },
+            ].map(({ label, value, sub }) => (
+              <div key={label} className="bg-black/40 rounded-xl p-2.5 border border-white/5 text-center">
+                <div className="text-[9px] font-mono text-muted-foreground uppercase mb-1">{label}</div>
+                <div className="font-mono font-bold text-sm text-foreground">{value}</div>
+                <div className="text-[9px] font-mono text-muted-foreground mt-0.5">{sub}</div>
+              </div>
+            ))}
+          </div>
 
-          {/* Notification */}
-          {address && (
-            <div className="bg-primary/5 border border-primary/20 rounded-xl p-2.5 text-xs font-mono text-primary/80">
-              ✓ {t.phantom_connected_msg}
+          {walletSol !== null && (
+            <div className="bg-primary/5 border border-primary/20 rounded-xl p-2.5 text-[11px] font-mono text-primary/80 flex items-center gap-2">
+              <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" />
+              Реальный баланс · синхронизируется каждые 30с
             </div>
           )}
 
