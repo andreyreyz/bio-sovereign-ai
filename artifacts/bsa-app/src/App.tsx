@@ -4,9 +4,12 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { WalletProvider } from "@/hooks/use-wallet";
 import { LangProvider } from "@/hooks/use-language";
+import { DeviceProvider } from "@/hooks/use-device";
 import { Layout } from "@/components/layout";
 import Dashboard from "@/pages/dashboard";
 import Registry from "@/pages/registry";
+import Statistics from "@/pages/statistics";
+import Profile from "@/pages/profile";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
@@ -17,6 +20,8 @@ function Router() {
       <Switch>
         <Route path="/" component={Dashboard} />
         <Route path="/registry" component={Registry} />
+        <Route path="/statistics" component={Statistics} />
+        <Route path="/profile" component={Profile} />
         <Route component={NotFound} />
       </Switch>
     </Layout>
@@ -28,12 +33,14 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <LangProvider>
         <WalletProvider>
-          <TooltipProvider>
-            <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-              <Router />
-            </WouterRouter>
-            <Toaster />
-          </TooltipProvider>
+          <DeviceProvider>
+            <TooltipProvider>
+              <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+                <Router />
+              </WouterRouter>
+              <Toaster />
+            </TooltipProvider>
+          </DeviceProvider>
         </WalletProvider>
       </LangProvider>
     </QueryClientProvider>
