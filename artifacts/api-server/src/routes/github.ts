@@ -6,7 +6,7 @@ const router = Router();
 router.post("/github/push", async (req, res) => {
   const { token, repo } = req.body as { token?: string; repo?: string };
 
-  if (!token || typeof token !== "string" || !token.startsWith("github_")) {
+  if (!token || typeof token !== "string" || token.length < 10) {
     res.status(400).json({ error: "Введите корректный GitHub токен" });
     return;
   }
