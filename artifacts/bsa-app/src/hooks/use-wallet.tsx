@@ -1,5 +1,7 @@
 import { createContext, useContext, useState, ReactNode } from "react";
 
+const DEMO_WALLET_ADDRESS = "C3ut3tRxbUiitGxHWXxNJrUvYkUTaioXFnaCyAMs6nmN";
+
 interface WalletContextType {
   address: string | null;
   connect: () => void;
@@ -12,8 +14,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [address, setAddress] = useState<string | null>(null);
 
   const connect = () => {
-    // Simulate connecting a wallet
-    setAddress("7xKXjXwY" + Math.random().toString(36).substring(2, 8) + "Abcd");
+    setAddress(DEMO_WALLET_ADDRESS);
   };
 
   const disconnect = () => {

@@ -1,8 +1,16 @@
 import { Router } from "express";
-import { ai } from "@workspace/integrations-gemini-ai";
+import { GoogleGenAI } from "@google/genai";
 import { AnalyzeVitalsBody } from "@workspace/api-zod";
 
 const router = Router();
+
+function getAiClient() {
+  const apiKey = process.env.GOOGLE_API_KEY;
+  if (!apiKey) {
+    throw new Error("GOOGLE_API_KEY is not configured");
+  }
+  return new GoogleGenAI({ apiKey });
+}
 
 router.post("/ai/analyze", async (req, res) => {
   const parsed = AnalyzeVitalsBody.safeParse(req.body);
@@ -13,39 +21,40 @@ router.post("/ai/analyze", async (req, res) => {
 
   const { steps, heartRate, sleepQuality, sleepHours, walletAddress } = parsed.data;
 
-  const prompt = `You are the Bio-Sovereign AI Oracle, an advanced autonomous health analysis system integrated with the Solana blockchain. Your role is to evaluate biometric data and determine if a citizen qualifies for an autonomous health reward payment of 0.1 SOL.
+  const prompt = `Ты — Bio-Sovereign AI Oracle, продвинутая система автономного анализа здоровья, интегрированная с блокчейном Solana. Твоя задача — оценить биометрические данные гражданина и определить, имеет ли он право на получение автономного вознаграждения в размере 0.1 SOL.
 
-CITIZEN BIOMETRIC DATA:
-- Daily Steps: ${steps.toLocaleString()} steps
-- Resting Heart Rate: ${heartRate} BPM
-- Sleep Quality Score: ${sleepQuality.toFixed(1)}/100
-- Sleep Duration: ${sleepHours.toFixed(1)} hours
-${walletAddress ? `- Wallet Address: ${walletAddress}` : ""}
+БИОМЕТРИЧЕСКИЕ ДАННЫЕ ГРАЖДАНИНА:
+- Шаги за день: ${steps.toLocaleString()} шагов
+- Пульс в покое: ${heartRate} BPM
+- Индекс качества сна: ${sleepQuality.toFixed(1)}/100
+- Продолжительность сна: ${sleepHours.toFixed(1)} часов
+${walletAddress ? `- Адрес кошелька: ${walletAddress}` : ""}
 
-EVALUATION CRITERIA (National Health Standard Protocol v2.1):
-- Steps: 8,000+ daily steps = excellent; 6,000-8,000 = adequate; below 6,000 = insufficient
-- Heart Rate: 50-80 BPM = optimal cardiovascular health; outside range = concern
-- Sleep Quality: 70+ = excellent; 55-70 = adequate; below 55 = insufficient
-- Sleep Hours: 7-9 hours = optimal; 6-7 = acceptable; below 6 = insufficient
+КРИТЕРИИ ОЦЕНКИ (Протокол национального стандарта здоровья v2.1):
+- Шаги: 8 000+ = отлично; 6 000–8 000 = достаточно; ниже 6 000 = недостаточно
+- Пульс: 50–80 BPM = оптимально; вне диапазона = требует внимания
+- Качество сна: 70+ = отлично; 55–70 = достаточно; ниже 55 = недостаточно
+- Часы сна: 7–9 часов = оптимально; 6–7 = приемлемо; ниже 6 = недостаточно
 
-SCORING SYSTEM:
-- Steps contribution: 25 points max
-- Heart rate contribution: 25 points max
-- Sleep quality contribution: 25 points max
-- Sleep hours contribution: 25 points max
+СИСТЕМА БАЛЛОВ:
+- Вклад шагов: до 25 баллов
+- Вклад пульса: до 25 баллов
+- Вклад качества сна: до 25 баллов
+- Вклад часов сна: до 25 баллов
 
-ELIGIBILITY THRESHOLD: Total score of 60 or above qualifies for autonomous reward.
+ПОРОГ ПРАВА НА ВОЗНАГРАЖДЕНИЕ: общий балл 60 и выше.
 
-Analyze these vitals precisely and respond ONLY with valid JSON in this exact format:
+Проанализируй данные и ответь ТОЛЬКО валидным JSON в таком формате (текст на русском языке):
 {
-  "eligible": <true or false>,
-  "score": <integer 0-100>,
-  "verdict": "<short verdict title, max 10 words>",
-  "explanation": "<detailed 3-4 sentence explanation of why this citizen does or does not qualify, referencing specific metrics and the national standard criteria. Be authoritative and precise.>",
-  "recommendations": ["<actionable recommendation 1>", "<actionable recommendation 2>", "<actionable recommendation 3>"]
+  "eligible": <true или false>,
+  "score": <целое число 0-100>,
+  "verdict": "<краткое название вердикта, максимум 8 слов>",
+  "explanation": "На основе данных о сне (${sleepQuality.toFixed(1)}/100) и шагах (${steps}), ваш индекс здоровья <оценка>. Условия смарт-контракта <статус>. <2-3 предложения с конкретными показателями и выводом>",
+  "recommendations": ["<рекомендация 1>", "<рекомендация 2>", "<рекомендация 3>"]
 }`;
 
   try {
+    const ai = getAiClient();
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
       contents: [{ role: "user", parts: [{ text: prompt }] }],

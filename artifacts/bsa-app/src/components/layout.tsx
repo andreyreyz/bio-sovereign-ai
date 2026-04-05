@@ -1,11 +1,19 @@
 import { Link, useLocation } from "wouter";
 import { useWallet } from "@/hooks/use-wallet";
+import { useLang, Lang } from "@/hooks/use-language";
 import { Button } from "@/components/ui/button";
 import { Activity, ShieldCheck, Database, Wallet } from "lucide-react";
+
+const LANG_OPTIONS: { value: Lang; label: string }[] = [
+  { value: "ru", label: "RU" },
+  { value: "kz", label: "KZ" },
+  { value: "en", label: "EN" },
+];
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const { address, connect, disconnect } = useWallet();
+  const { lang, setLang, t } = useLang();
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-[url('https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center bg-fixed bg-no-repeat relative">
@@ -34,7 +42,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               >
                 <div className="flex items-center gap-2">
                   <Activity className="w-4 h-4" />
-                  Dashboard
+                  {t.nav_dashboard}
                 </div>
               </Link>
               <Link 
@@ -46,13 +54,31 @@ export function Layout({ children }: { children: React.ReactNode }) {
               >
                 <div className="flex items-center gap-2">
                   <Database className="w-4 h-4" />
-                  Registry
+                  {t.nav_registry}
                 </div>
               </Link>
             </nav>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            {/* Language Switcher */}
+            <div className="flex items-center gap-1 bg-secondary/50 rounded-md border border-border p-1">
+              {LANG_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => setLang(opt.value)}
+                  data-testid={`lang-${opt.value}`}
+                  className={`px-2 py-0.5 rounded text-xs font-mono font-bold transition-colors ${
+                    lang === opt.value
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+
             {address ? (
               <div className="flex items-center gap-3">
                 <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-secondary rounded-md border border-border">
@@ -68,7 +94,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   className="font-mono text-xs border-primary/30 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30"
                   data-testid="button-disconnect"
                 >
-                  Disconnect
+                  {t.disconnect}
                 </Button>
               </div>
             ) : (
@@ -78,7 +104,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 data-testid="button-connect"
               >
                 <Wallet className="w-4 h-4 mr-2" />
-                Connect Wallet
+                {t.connect_wallet}
               </Button>
             )}
           </div>
