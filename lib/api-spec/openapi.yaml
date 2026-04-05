@@ -3,20 +3,25 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Bio-Sovereign AI API specification
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: vitals
+    description: Health vitals simulation
+  - name: ai
+    description: AI Oracle analysis
+  - name: rewards
+    description: Solana blockchain rewards
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +29,101 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /vitals/current:
+    get:
+      operationId: getCurrentVitals
+      tags: [vitals]
+      summary: Get current simulated health vitals
+      responses:
+        "200":
+          description: Current vitals
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Vitals"
+
+  /vitals/history:
+    get:
+      operationId: getVitalsHistory
+      tags: [vitals]
+      summary: Get vitals history for the last 24 hours
+      responses:
+        "200":
+          description: Vitals history array
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/VitalsHistoryEntry"
+
+  /ai/analyze:
+    post:
+      operationId: analyzeVitals
+      tags: [ai]
+      summary: Analyze vitals with Gemini AI and get health verdict
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnalyzeVitalsBody"
+      responses:
+        "200":
+          description: AI verdict
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiVerdict"
+
+  /rewards/claim:
+    post:
+      operationId: claimReward
+      tags: [rewards]
+      summary: Claim SOL reward on Solana Devnet
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClaimRewardBody"
+      responses:
+        "200":
+          description: Transaction result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RewardResult"
+
+  /rewards/history:
+    get:
+      operationId: getRewardsHistory
+      tags: [rewards]
+      summary: Get list of past reward payments
+      responses:
+        "200":
+          description: List of past rewards
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RewardRecord"
+
+  /rewards/stats:
+    get:
+      operationId: getRewardsStats
+      tags: [rewards]
+      summary: Get aggregated reward statistics
+      responses:
+        "200":
+          description: Reward stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RewardsStats"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +134,183 @@ components:
       required:
         - status
 
+    Vitals:
+      type: object
+      properties:
+        steps:
+          type: integer
+          description: Daily step count
+        heartRate:
+          type: integer
+          description: Heart rate in BPM
+        sleepQuality:
+          type: number
+          description: Sleep quality score 0-100
+        sleepHours:
+          type: number
+          description: Hours of sleep
+        timestamp:
+          type: string
+          format: date-time
+      required:
+        - steps
+        - heartRate
+        - sleepQuality
+        - sleepHours
+        - timestamp
+
+    VitalsHistoryEntry:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        steps:
+          type: integer
+        heartRate:
+          type: integer
+        sleepQuality:
+          type: number
+        sleepHours:
+          type: number
+      required:
+        - timestamp
+        - steps
+        - heartRate
+        - sleepQuality
+        - sleepHours
+
+    AnalyzeVitalsBody:
+      type: object
+      properties:
+        steps:
+          type: integer
+        heartRate:
+          type: integer
+        sleepQuality:
+          type: number
+        sleepHours:
+          type: number
+        walletAddress:
+          type: string
+          description: Connected wallet public key
+      required:
+        - steps
+        - heartRate
+        - sleepQuality
+        - sleepHours
+
+    AiVerdict:
+      type: object
+      properties:
+        eligible:
+          type: boolean
+          description: Whether the user is eligible for a reward
+        score:
+          type: integer
+          description: Health score 0-100
+        verdict:
+          type: string
+          description: Short verdict title
+        explanation:
+          type: string
+          description: Detailed AI explanation of why the reward is/isn't granted
+        recommendations:
+          type: array
+          items:
+            type: string
+          description: AI health recommendations
+      required:
+        - eligible
+        - score
+        - verdict
+        - explanation
+        - recommendations
+
+    ClaimRewardBody:
+      type: object
+      properties:
+        walletAddress:
+          type: string
+          description: Recipient wallet public key
+        verdictId:
+          type: integer
+          description: ID of the AI verdict
+        aiExplanation:
+          type: string
+          description: AI explanation text for the record
+        healthScore:
+          type: integer
+      required:
+        - walletAddress
+        - aiExplanation
+        - healthScore
+
+    RewardResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        signature:
+          type: string
+          description: Solana transaction signature
+        amount:
+          type: number
+          description: SOL amount sent
+        explorerUrl:
+          type: string
+          description: Link to Solana Explorer
+        recordId:
+          type: integer
+      required:
+        - success
+        - signature
+        - amount
+        - explorerUrl
+
+    RewardRecord:
+      type: object
+      properties:
+        id:
+          type: integer
+        walletAddress:
+          type: string
+        signature:
+          type: string
+        amount:
+          type: number
+        healthScore:
+          type: integer
+        aiExplanation:
+          type: string
+        explorerUrl:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - walletAddress
+        - signature
+        - amount
+        - healthScore
+        - aiExplanation
+        - explorerUrl
+        - createdAt
+
+    RewardsStats:
+      type: object
+      properties:
+        totalRewards:
+          type: integer
+        totalSolPaid:
+          type: number
+        averageHealthScore:
+          type: number
+        uniqueWallets:
+          type: integer
+      required:
+        - totalRewards
+        - totalSolPaid
+        - averageHealthScore
+        - uniqueWallets
