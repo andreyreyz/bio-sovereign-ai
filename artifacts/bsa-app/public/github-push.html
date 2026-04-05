@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Выгрузить на GitHub</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Courier New', monospace;
+      background: #060d0a;
+      color: #e2e8e4;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .card {
+      background: rgba(0,255,128,0.04);
+      border: 1px solid rgba(0,255,128,0.25);
+      border-radius: 16px;
+      padding: 32px;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: 0 0 40px rgba(0,255,128,0.08);
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+    .logo svg { color: #00ff80; }
+    .logo-text { font-size: 18px; font-weight: bold; letter-spacing: -0.5px; }
+    .logo-text span { color: rgba(0,255,128,0.6); }
+    h2 {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 6px;
+      color: #00ff80;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .subtitle {
+      font-size: 12px;
+      color: #6b7a72;
+      margin-bottom: 28px;
+      line-height: 1.5;
+    }
+    label {
+      display: block;
+      font-size: 11px;
+      text-transform: uppercase;
+      color: #6b7a72;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+    input {
+      width: 100%;
+      background: rgba(0,0,0,0.5);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      color: #e2e8e4;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      padding: 12px 14px;
+      outline: none;
+      transition: border-color 0.2s;
+      margin-bottom: 16px;
+    }
+    input:focus { border-color: rgba(0,255,128,0.5); }
+    .hint {
+      font-size: 11px;
+      color: #6b7a72;
+      margin-top: -10px;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+    .hint a { color: #00ff80; text-decoration: none; }
+    .warning {
+      background: rgba(234,179,8,0.08);
+      border: 1px solid rgba(234,179,8,0.3);
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: 11px;
+      color: #d4a017;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+    button {
+      width: 100%;
+      background: #00ff80;
+      color: #060d0a;
+      border: none;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 0 20px rgba(0,255,128,0.3);
+    }
+    button:hover { background: #00cc66; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .status {
+      margin-top: 20px;
+      padding: 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      display: none;
+      line-height: 1.6;
+    }
+    .status.loading {
+      display: block;
+      background: rgba(0,255,128,0.05);
+      border: 1px solid rgba(0,255,128,0.2);
+      color: #00ff80;
+      text-align: center;
+    }
+    .status.success {
+      display: block;
+      background: rgba(0,255,128,0.08);
+      border: 1px solid rgba(0,255,128,0.4);
+      color: #00ff80;
+    }
+    .status.error {
+      display: block;
+      background: rgba(239,68,68,0.08);
+      border: 1px solid rgba(239,68,68,0.4);
+      color: #f87171;
+    }
+    .status a { color: #00ff80; font-weight: bold; }
+    .spinner {
+      display: inline-block;
+      width: 16px; height: 16px;
+      border: 2px solid rgba(0,255,128,0.3);
+      border-top-color: #00ff80;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+      </svg>
+      <span class="logo-text">BSA<span>.</span>PROTOCOL</span>
+    </div>
+
+    <h2>Выгрузить на GitHub</h2>
+    <p class="subtitle">Введите ваш GitHub токен ниже. Токен НЕ сохраняется — используется однократно для push.</p>
+
+    <div class="warning">
+      ⚠ Используйте Classic токен с правами <strong>repo</strong>.<br>
+      Создать: <a href="https://github.com/settings/tokens/new" target="_blank" style="color:#d4a017">github.com/settings/tokens/new</a> → выберите "repo" → Generate.
+    </div>
+
+    <label for="token">GitHub Personal Access Token</label>
+    <input type="password" id="token" placeholder="ghp_... или github_pat_..." autocomplete="off" />
+
+    <label for="repo">Имя репозитория</label>
+    <input type="text" id="repo" value="bio-sovereign-ai" placeholder="bio-sovereign-ai" />
+    <p class="hint">
+      Репозиторий должен существовать на GitHub: 
+      <a href="https://github.com/new" target="_blank">github.com/new</a>
+    </p>
+
+    <button id="btn" onclick="doPush()">🚀 Залить на GitHub</button>
+
+    <div class="status" id="status"></div>
+  </div>
+
+  <script>
+    async function doPush() {
+      const token = document.getElementById('token').value.trim();
+      const repo = document.getElementById('repo').value.trim();
+      const status = document.getElementById('status');
+      const btn = document.getElementById('btn');
+
+      if (!token) {
+        status.className = 'status error';
+        status.style.display = 'block';
+        status.textContent = 'Введите токен';
+        return;
+      }
+
+      btn.disabled = true;
+      status.className = 'status loading';
+      status.innerHTML = '<span class="spinner"></span> Выгружаю проект на GitHub...';
+
+      try {
+        const resp = await fetch('/api/github/push', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token, repo })
+        });
+        const data = await resp.json();
+
+        if (data.success) {
+          status.className = 'status success';
+          status.innerHTML = `✅ Успешно выгружено!<br><br>🔗 <a href="${data.repoUrl}" target="_blank">${data.repoUrl}</a>`;
+          document.getElementById('token').value = '';
+        } else {
+          status.className = 'status error';
+          status.textContent = '❌ ' + (data.error || 'Ошибка при выгрузке');
+        }
+      } catch (e) {
+        status.className = 'status error';
+        status.textContent = '❌ Ошибка соединения: ' + e.message;
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Enter') doPush();
+    });
+  </script>
+</body>
+</html>
