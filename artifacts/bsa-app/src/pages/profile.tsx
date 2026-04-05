@@ -9,8 +9,9 @@ import {
   Zap, Battery, Clock, Bluetooth, BluetoothOff, Lock, Unlock,
   FlaskConical, Dna, Calculator, Coins, ExternalLink,
   ChevronDown, ChevronRight, Send, ArrowDownToLine, AlertTriangle, TrendingDown,
-  HeartPulse, Tag, Sparkles, Building2, Star
+  HeartPulse, Tag, Sparkles, Building2, Star, ArrowRight, RotateCcw, Stethoscope
 } from "lucide-react";
+import { CLINICS } from "@/data/clinics";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { ru, kk, enUS } from "date-fns/locale";
@@ -165,25 +166,87 @@ export default function Profile() {
     return `${Math.round(sol * SOL_USD * USD_KZT).toLocaleString()}₸`;
   }
 
-  // ── SEND SOL ─────────────────────────────────────────────────────────────
-  const [sendAddr, setSendAddr] = useState("");
-  const [sendAmt, setSendAmt]   = useState("");
-  const [sendState, setSendState] = useState<"idle"|"sending"|"ok"|"err">("idle");
-  const [sendResult, setSendResult] = useState<any>(null);
+  // ── CLINIC PAYMENT (replaces send) ────────────────────────────────────────
+  const CLINIC_SERVICES: Record<string, { name: string; priceKzt: number }[]> = {
+    tibora: [
+      { name: "Первичная консультация", priceKzt: 15000 },
+      { name: "Акупунктура (5 сеансов)", priceKzt: 45000 },
+      { name: "Аюрведическая диагностика", priceKzt: 25000 },
+      { name: "Реабилитационная программа", priceKzt: 80000 },
+    ],
+    c1: [
+      { name: "Консультация кардиолога", priceKzt: 12000 },
+      { name: "ЭКГ + расшифровка", priceKzt: 8000 },
+      { name: "Холтер-мониторинг 24ч", priceKzt: 20000 },
+      { name: "Эхокардиография (ЭхоКГ)", priceKzt: 15000 },
+    ],
+    c2: [
+      { name: "Консультация невролога", priceKzt: 9500 },
+      { name: "МРТ головного мозга", priceKzt: 35000 },
+      { name: "Нейробиологическая стимуляция", priceKzt: 18000 },
+    ],
+    c3: [
+      { name: "Консультация эндокринолога", priceKzt: 8000 },
+      { name: "УЗИ щитовидной железы", priceKzt: 6000 },
+      { name: "Анализ на гормоны (7 показателей)", priceKzt: 12000 },
+    ],
+    c4: [
+      { name: "Консультация ортопеда", priceKzt: 7500 },
+      { name: "МРТ сустава", priceKzt: 28000 },
+      { name: "PRP-терапия (1 сеанс)", priceKzt: 22000 },
+    ],
+    c5: [
+      { name: "Консультация пульмонолога", priceKzt: 7000 },
+      { name: "Спирометрия", priceKzt: 5000 },
+      { name: "Бодиплетизмография", priceKzt: 10000 },
+    ],
+    c6: [
+      { name: "Консультация гастроэнтеролога", priceKzt: 6500 },
+      { name: "ФГДС (гастроскопия)", priceKzt: 18000 },
+      { name: "УЗИ органов брюшной полости", priceKzt: 5000 },
+    ],
+  };
 
-  async function doSend() {
-    if (!sendAddr || !sendAmt || parseFloat(sendAmt) <= 0) return;
-    setSendState("sending");
+  const [payClinicId, setPayClinicId] = useState("tibora");
+  const [payServiceIdx, setPayServiceIdx] = useState(0);
+  const [payState, setPayState] = useState<"idle"|"paying"|"ok"|"err">("idle");
+  const [payResult, setPayResult] = useState<any>(null);
+
+  const selectedClinic = CLINICS.find(c => c.id === payClinicId) || CLINICS[0];
+  const selectedServices = CLINIC_SERVICES[payClinicId] || [];
+  const selectedService = selectedServices[payServiceIdx] || selectedServices[0];
+  const clinicDisc = selectedClinic.medDiscount || 0;
+  const fullPriceKzt = selectedService?.priceKzt || 0;
+  const bsaPriceKzt  = Math.round(fullPriceKzt * (1 - clinicDisc / 100));
+  const userPaysSol  = parseFloat((bsaPriceKzt / USD_KZT / SOL_USD).toFixed(4));
+  const bsaLeadFeeSol = parseFloat((fullPriceKzt * (clinicDisc / 100) / USD_KZT / SOL_USD).toFixed(4));
+
+  async function doPayClinic() {
+    if (!selectedService || payState === "paying") return;
+    setPayState("paying");
     try {
       const r = await fetch(`${base}/api/finance/send`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ toAddress: sendAddr, amount: parseFloat(sendAmt) }),
+        body: JSON.stringify({
+          toAddress: displayAddress,  // routes through BSA pool wallet
+          amount: userPaysSol,
+          memo: `BSA_CLINIC:${payClinicId}:${selectedService.name}`,
+        }),
       });
       const d = await r.json();
-      if (r.ok) { setSendResult(d); setSendState("ok"); fetchBalance(true); }
-      else { setSendResult(d); setSendState("err"); }
-    } catch (e: any) { setSendResult({ error: e.message }); setSendState("err"); }
+      if (r.ok) {
+        setPayResult({ ...d, clinic: selectedClinic, service: selectedService, userPaysSol, bsaLeadFeeSol, clinicDisc });
+        setPayState("ok");
+        fetchBalance(true);
+      } else {
+        setPayResult(d);
+        setPayState("err");
+      }
+    } catch (e: any) {
+      setPayResult({ error: e.message });
+      setPayState("err");
+    }
   }
 
   // ── STAKE (real API) ──────────────────────────────────────────────────────
@@ -390,72 +453,228 @@ export default function Profile() {
           АККОРДЕОН — все секции
           ════════════════════════════════════════════════════════════════════ */}
 
-      {/* ─ Отправить SOL ─ */}
+      {/* ─ Оплата приёма в клинике ─ */}
       <Section open={!!open.send} onToggle={() => toggle("send")}
-        icon={<Send className="w-4 h-4 text-primary" />}
-        title="Отправить SOL"
-        badge={sendState === "ok" ? "✓ Отправлено" : `${displaySol.toFixed(4)} SOL`}
-        badgeColor={sendState === "ok" ? "text-primary" : "text-muted-foreground"}
+        icon={<Stethoscope className="w-4 h-4 text-primary" />}
+        title="Оплата приёма"
+        badge={payState === "ok" ? "✓ Оплачено" : selectedClinic ? `−${clinicDisc}% · ${userPaysSol} SOL` : "Выберите клинику"}
+        badgeColor={payState === "ok" ? "text-primary" : "text-primary/70"}
         accent="border-primary/20"
       >
         <div className="pt-3 space-y-3">
-          {sendState === "ok" && sendResult ? (
-            <div className="space-y-2">
-              <div className="bg-primary/10 border border-primary/30 rounded-xl p-3 text-center">
-                <CheckCircle2 className="w-6 h-6 text-primary mx-auto mb-1" />
-                <div className="font-mono font-bold text-primary">{sendResult.amount} SOL отправлено</div>
-                <div className="text-[10px] font-mono text-muted-foreground truncate mt-1">→ {sendResult.transfer?.toAddress?.slice(0,20)}...</div>
+
+          {/* ── Круговая экономика BSA ── */}
+          <div className="bg-black/30 border border-primary/15 rounded-xl p-3">
+            <p className="text-[9px] font-mono text-muted-foreground uppercase tracking-widest mb-2 text-center">Как работает BSA-экономика</p>
+            <div className="flex items-center justify-between gap-1">
+              {[
+                { icon: "💪", label: "Майнишь", sub: "здоровьем", color: "text-primary" },
+                { icon: "→",  label: "",         sub: "",          color: "text-muted-foreground/40" },
+                { icon: "🏥", label: "Платишь",  sub: "50% клинике", color: "text-cyan-400" },
+                { icon: "→",  label: "",         sub: "",          color: "text-muted-foreground/40" },
+                { icon: "💰", label: "Клиника",  sub: "→ BSA лид", color: "text-amber-400" },
+                { icon: "→",  label: "",         sub: "",          color: "text-muted-foreground/40" },
+                { icon: "🔄", label: "Пул BSA",  sub: "растёт",   color: "text-rose-400" },
+              ].map((s, i) => s.icon === "→" ? (
+                <ArrowRight key={i} className="w-3 h-3 text-muted-foreground/30 flex-shrink-0" />
+              ) : (
+                <div key={i} className="flex flex-col items-center gap-0.5 flex-shrink-0">
+                  <span className="text-base">{s.icon}</span>
+                  <span className={`text-[8px] font-mono font-bold ${s.color}`}>{s.label}</span>
+                  <span className="text-[7px] font-mono text-muted-foreground/60 text-center leading-tight">{s.sub}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {payState === "ok" && payResult ? (
+            /* ── Чек об оплате ── */
+            <div className="space-y-3">
+              <div className="relative rounded-xl border border-primary/40 overflow-hidden"
+                style={{ background: "linear-gradient(135deg,#050f08 0%,#0a1812 100%)" }}>
+                <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-primary to-transparent" />
+                <div className="p-4 space-y-3">
+                  <div className="text-center">
+                    <CheckCircle2 className="w-8 h-8 text-primary mx-auto mb-2" />
+                    <div className="font-mono font-bold text-primary text-lg">Приём оплачен</div>
+                    <div className="text-[11px] font-mono text-muted-foreground">{payResult.service?.name}</div>
+                  </div>
+
+                  {/* Flow receipt */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 bg-black/30 rounded-lg p-2.5 border border-white/5">
+                      <span className="text-sm">💪</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[10px] font-mono text-muted-foreground">Ты потратил (50% цены)</div>
+                        <div className="font-mono font-bold text-sm text-foreground">{payResult.userPaysSol} SOL</div>
+                      </div>
+                      <div className="text-[10px] font-mono text-muted-foreground text-right">
+                        ≈ {Math.round(payResult.userPaysSol * SOL_USD * USD_KZT).toLocaleString()}₸
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-center">
+                      <ArrowRight className="w-3.5 h-3.5 text-muted-foreground/40 rotate-90" />
+                    </div>
+                    <div className="flex items-center gap-2 bg-black/30 rounded-lg p-2.5 border border-white/5">
+                      <span className="text-sm">🏥</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[10px] font-mono text-muted-foreground">{payResult.clinic?.name} получила</div>
+                        <div className="font-mono font-bold text-sm text-cyan-400">{payResult.userPaysSol} SOL</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-center">
+                      <ArrowRight className="w-3.5 h-3.5 text-muted-foreground/40 rotate-90" />
+                    </div>
+                    <div className="flex items-center gap-2 bg-black/30 rounded-lg p-2.5 border border-amber-500/20">
+                      <span className="text-sm">💰</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[10px] font-mono text-muted-foreground">Клиника платит BSA (лид-фи)</div>
+                        <div className="font-mono font-bold text-sm text-amber-400">+{payResult.bsaLeadFeeSol} SOL → пул</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-center">
+                      <ArrowRight className="w-3.5 h-3.5 text-muted-foreground/40 rotate-90" />
+                    </div>
+                    <div className="flex items-center gap-2 bg-primary/5 rounded-lg p-2.5 border border-primary/20">
+                      <span className="text-sm">🔄</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[10px] font-mono text-primary/70">BSA пул пополнен</div>
+                        <div className="font-mono font-bold text-sm text-primary">Цикл замкнут ✓</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {payResult.explorerUrl && (
+                    <a href={payResult.explorerUrl} target="_blank" rel="noopener noreferrer"
+                      className="flex items-center justify-center gap-1.5 text-cyan-400/70 text-[10px] font-mono hover:text-cyan-400 transition-colors">
+                      <ExternalLink className="w-3 h-3" />Просмотр в Solana Explorer
+                    </a>
+                  )}
+                </div>
               </div>
-              <a href={sendResult.explorerUrl} target="_blank" rel="noopener noreferrer"
-                className="flex items-center justify-center gap-1.5 text-cyan-400 text-xs font-mono hover:underline">
-                <ExternalLink className="w-3 h-3" /> Просмотр в Solana Explorer
-              </a>
               <Button size="sm" variant="outline" className="w-full font-mono text-xs"
-                onClick={() => { setSendState("idle"); setSendAddr(""); setSendAmt(""); setSendResult(null); }}>
-                Отправить ещё
+                onClick={() => { setPayState("idle"); setPayResult(null); }}>
+                <RotateCcw className="w-3 h-3 mr-1.5" />Оплатить ещё один приём
               </Button>
             </div>
-          ) : sendState === "err" ? (
+
+          ) : payState === "err" ? (
             <div className="space-y-2">
               <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-3 text-center">
                 <AlertTriangle className="w-5 h-5 text-destructive mx-auto mb-1" />
-                <div className="text-xs font-mono text-destructive">{sendResult?.error || "Ошибка транзакции"}</div>
+                <div className="text-xs font-mono text-destructive">{payResult?.error || "Ошибка транзакции"}</div>
               </div>
               <Button size="sm" variant="outline" className="w-full font-mono text-xs"
-                onClick={() => { setSendState("idle"); setSendResult(null); }}>
+                onClick={() => { setPayState("idle"); setPayResult(null); }}>
                 Попробовать снова
               </Button>
             </div>
+
           ) : (
+            /* ── Форма оплаты ── */
             <>
+              {/* Выбор клиники */}
               <div>
-                <label className="text-[10px] font-mono text-muted-foreground uppercase mb-1 block">Адрес получателя (Solana)</label>
-                <input value={sendAddr} onChange={e => setSendAddr(e.target.value)}
-                  placeholder="C3ut3tRx..."
-                  className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs font-mono text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/50 transition-colors" />
-              </div>
-              <div>
-                <label className="text-[10px] font-mono text-muted-foreground uppercase mb-1 block">Сумма SOL</label>
-                <div className="relative">
-                  <input value={sendAmt} onChange={e => setSendAmt(e.target.value)}
-                    type="number" step="0.001" min="0.001" max="10"
-                    placeholder="0.100"
-                    className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm font-mono text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/50 transition-colors pr-12" />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono text-muted-foreground">SOL</span>
+                <label className="text-[10px] font-mono text-muted-foreground uppercase mb-1.5 block">Клиника-партнёр</label>
+                <div className="space-y-1.5">
+                  {CLINICS.slice(0, 4).map(c => (
+                    <button key={c.id} onClick={() => { setPayClinicId(c.id); setPayServiceIdx(0); }}
+                      className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg border text-left transition-all ${
+                        payClinicId === c.id
+                          ? c.flagship ? "border-amber-500/50 bg-amber-500/8" : "border-primary/50 bg-primary/8"
+                          : "border-white/8 bg-black/20 hover:border-white/20"
+                      }`}>
+                      <span className="text-base flex-shrink-0">{c.flagship ? "🌿" : "🏥"}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className={`font-mono text-xs font-bold truncate ${c.flagship ? "text-amber-200" : "text-foreground"}`}>
+                          {c.name}
+                          {c.flagship && <span className="text-[8px] text-amber-400/70 ml-1">· Флагман</span>}
+                        </div>
+                        <div className="text-[9px] font-mono text-muted-foreground">{c.city || "Алматы"} · {c.mainSpec}</div>
+                      </div>
+                      <div className={`font-mono font-bold text-sm flex-shrink-0 ${c.flagship ? "text-amber-300" : "text-primary"}`}>
+                        −{c.medDiscount}%
+                      </div>
+                    </button>
+                  ))}
+                  {CLINICS.length > 4 && (
+                    <Link href="/clinics" className="block text-center text-[10px] font-mono text-muted-foreground/60 hover:text-muted-foreground py-1">
+                      + ещё {CLINICS.length - 4} клиники →
+                    </Link>
+                  )}
                 </div>
-                {sendAmt && (
-                  <p className="text-[10px] font-mono text-muted-foreground mt-1">
-                    ≈ ${(parseFloat(sendAmt||"0") * SOL_USD).toFixed(2)} · {Math.round(parseFloat(sendAmt||"0") * SOL_USD * USD_KZT).toLocaleString()}₸
-                  </p>
-                )}
               </div>
-              <Button onClick={doSend} disabled={sendState === "sending" || !sendAddr || !sendAmt}
+
+              {/* Выбор услуги */}
+              <div>
+                <label className="text-[10px] font-mono text-muted-foreground uppercase mb-1.5 block">Услуга</label>
+                <div className="space-y-1">
+                  {selectedServices.map((svc, i) => (
+                    <button key={svc.name} onClick={() => setPayServiceIdx(i)}
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-lg border text-left transition-all ${
+                        payServiceIdx === i ? "border-primary/40 bg-primary/5" : "border-white/8 bg-black/20 hover:border-white/15"
+                      }`}>
+                      <span className="font-mono text-xs truncate flex-1 mr-2">{svc.name}</span>
+                      <div className="text-right flex-shrink-0">
+                        <div className="font-mono text-xs text-muted-foreground line-through">{svc.priceKzt.toLocaleString()}₸</div>
+                        <div className="font-mono text-xs font-bold text-primary">{Math.round(svc.priceKzt * (1 - clinicDisc / 100)).toLocaleString()}₸</div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Итого */}
+              {selectedService && (
+                <div className="relative rounded-xl border border-primary/25 overflow-hidden"
+                  style={{ background: "linear-gradient(135deg,#050f08 0%,#0a1214 100%)" }}>
+                  <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
+                  <div className="p-3 space-y-2">
+                    <p className="text-[9px] font-mono text-muted-foreground uppercase tracking-widest">Расчёт оплаты</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="bg-black/30 rounded-lg p-2 border border-white/5">
+                        <div className="text-[9px] font-mono text-muted-foreground">Стандартная цена</div>
+                        <div className="font-mono text-sm font-bold text-muted-foreground line-through">{fullPriceKzt.toLocaleString()}₸</div>
+                      </div>
+                      <div className="bg-primary/5 rounded-lg p-2 border border-primary/20">
+                        <div className="text-[9px] font-mono text-primary/70">Ваша цена BSA</div>
+                        <div className="font-mono text-sm font-bold text-primary">{bsaPriceKzt.toLocaleString()}₸</div>
+                      </div>
+                    </div>
+                    <div className="space-y-1.5 text-[10px] font-mono">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Вы платите SOL</span>
+                        <span className="font-bold text-foreground">{userPaysSol} SOL</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Скидка (медбаланс)</span>
+                        <span className="font-bold text-primary">−{clinicDisc}% = {bsaLeadFeeSol} SOL</span>
+                      </div>
+                      <div className="h-px bg-white/5" />
+                      <div className="flex justify-between">
+                        <span className="text-amber-400/70">Клиника → BSA лид-фи</span>
+                        <span className="font-bold text-amber-400">+{bsaLeadFeeSol} SOL</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground/60">Ваша экономия</span>
+                        <span className="text-rose-400 font-bold">{(fullPriceKzt - bsaPriceKzt).toLocaleString()}₸</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <Button onClick={doPayClinic}
+                disabled={payState === "paying" || !selectedService || displaySol < userPaysSol}
                 className="w-full font-mono bg-primary text-black hover:bg-primary/90 shadow-[0_0_15px_rgba(0,255,128,0.3)]">
-                {sendState === "sending"
-                  ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Отправка...</>
-                  : <><Send className="w-4 h-4 mr-2" />Отправить на Devnet</>}
+                {payState === "paying"
+                  ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Обработка...</>
+                  : displaySol < userPaysSol ? "Недостаточно SOL"
+                  : <><Stethoscope className="w-4 h-4 mr-2" />Оплатить {userPaysSol} SOL · {bsaPriceKzt.toLocaleString()}₸</>}
               </Button>
-              <p className="text-[10px] font-mono text-muted-foreground/60 text-center">Реальная on-chain транзакция · Solana Devnet · Макс 10 SOL</p>
+              <p className="text-[10px] font-mono text-muted-foreground/50 text-center">
+                SOL → Пул BSA → клиника получает подтверждение · Devnet
+              </p>
             </>
           )}
         </div>
